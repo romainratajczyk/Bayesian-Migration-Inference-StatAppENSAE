@@ -22,7 +22,6 @@ df <- read.csv(file_path, stringsAsFactors = FALSE)
 df_pos <- subset(df, migrantCount > 0) #enlève 100 000 lignes
 
 
-
 df_pos$l_migrants <- log(df_pos$migrantCount)
 df_pos$l_dist     <- log(df_pos$distw_harmonic) # distance harmonique pondérée de toutes les grandes villes
 df_pos$l_pop_o    <- log(df_pos$pop_o)
