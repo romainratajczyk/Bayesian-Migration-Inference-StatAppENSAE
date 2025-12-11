@@ -17,12 +17,12 @@ import warnings
 
 
 PATHS = {
-    'flows': 'data/azoseRaftery2019flows.csv',     # Fichier .csv des flux (Azose & Raftery)
-    'cepii_dyadic': 'data/dist_cepii.dta',       # Fichier .dta de Geodist (Dyadic file)
-    'cepii_country': 'data/geo_cepii.dta',      # Fichier .dta de Geodist (Country-specific file)
-    'un_data_pop': 'data/population_un.csv', # Fichier .csv de UN Data (Pop, 0-14, 60+)
-    'un_data_imr': 'data/mortality_un.csv',  # Fichier .csv de UN Data (Mortalité)
-    'un_data_urban': 'data/urban_un.csv'       # Fichier .csv de UN Data (Urbanisation)
+    'flows': 'ProjetStat/data/azoseRaftery2019flows.csv',     # Fichier .csv des flux (Azose & Raftery)
+    'cepii_dyadic': 'ProjetStat/data/dist_cepii.dta',       # Fichier .dta de Geodist (Dyadic file)
+    'cepii_country': 'ProjetStat/data/geo_cepii.dta',      # Fichier .dta de Geodist (Country-specific file)
+    'un_data_pop': 'ProjetStat/data/population_un.csv',   # Fichier .csv de UN Data (Pop, 0-14, 60+)
+    'un_data_imr': 'ProjetStat/data/mortality_un.csv',    # Fichier .csv de UN Data (Mortalité)
+    'un_data_urban': 'ProjetStat/data/urban_un.csv'       # Fichier .csv de UN Data (Urbanisation)
 }
 
 

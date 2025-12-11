@@ -8,7 +8,7 @@ library(estimatr)
 
 # Cmd+Entrée avec curseur sur une ligne pour exécuter la ligne
 
-file_path <- "/Users/romain/Desktop/Projets DS/ProjetStat/data/reg_gravity_CEPII.csv"
+file_path <- "ProjetStat/reg_gravity_CEPII.csv"
 df <- read.csv(file_path, stringsAsFactors = FALSE)
 
 
@@ -45,15 +45,3 @@ model_ols_robust <- lm_robust(l_migrants ~ l_dist + l_pop_o + l_pop_d + l_gdpcap
 summary(model_ols_robust)
 
 # on a supposé l'homoscédasticité. On a les bons coeff de beta, mais les p-value sont fausses! 
-
-
-
-
-
-
-
-
-
-
-
-
