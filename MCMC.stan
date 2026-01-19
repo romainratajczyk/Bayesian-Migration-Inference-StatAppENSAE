@@ -1,9 +1,9 @@
 // 1) DATA
 data {
-  int<lower=0> N;                // Nombre d'observations (lignes)
-  int<lower=0> K;                // Nombre de variables explicatives (colonnes)
-  matrix[N, K] X;                // La matrice contenant toutes tes variables (Pop, Dist, PIB...)
-  vector[N] y;                   // La cible (log_migrantCount)
+  int<lower=0> N;                // Nombre d'observations 
+  int<lower=0> K;                // Nombre de variables explicatives 
+  matrix[N, K] X;                // matrice contenant toutes les variables (Pop, Dist, PIB...)
+  vector[N] y;                   
 }
 
 // 2) PARAMETERS
@@ -15,13 +15,15 @@ parameters {
 
 // 3) MODEL
 model {
-  // A. Priors (Croyances initiales)
+  // Priors 
   // On suppose que les effets sont raisonnables (entre -10 et +10 environ)
   beta ~ normal(0, 5);           
   alpha ~ normal(0, 10);
-  sigma ~ cauchy(0, 2.5);        // Prior standard pour l'erreur
+  sigma ~ cauchy(0, 2.5);        
 
-  // B. Vraisemblance (Likelihood)
-  // Produit matriciel : X * beta fait tout le calcul d'un coup
+  // Vraisemblance 
+  // X * beta fait tout le calcul d'un coup
   y ~ normal(alpha + X * beta, sigma);
 }
+
+// exemples jags / exemples dans gelman
