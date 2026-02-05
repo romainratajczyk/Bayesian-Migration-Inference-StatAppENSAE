@@ -26,4 +26,8 @@ model {
   y ~ normal(alpha + X * beta, sigma);
 }
 
+
+
+
+
 // exemples jags / exemples dans gelman
