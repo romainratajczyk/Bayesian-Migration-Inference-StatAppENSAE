@@ -88,7 +88,7 @@ gravity_ready <- master_dt[flow > 0]
 
 
 fwrite(gravity_ready, 
-       file = "ProjetStat/data_final/FINAL_GRAVITY_TRAINING_MATRIX.csv", 
+       file = "ProjetStat/data/FINAL_GRAVITY_TRAINING_MATRIX.csv", 
        sep = ",", 
        dec = ".", 
        row.names = FALSE, 
