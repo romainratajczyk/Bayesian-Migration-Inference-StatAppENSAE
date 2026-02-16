@@ -3,7 +3,7 @@ data/.DS_Store
 # Fichiers de données à ignorer
 #*.csv
 *.xlsx
-*.xls
+.xls
 data/
 
 # Fichiers Python temporaires
