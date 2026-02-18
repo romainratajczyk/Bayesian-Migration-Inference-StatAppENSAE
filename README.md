@@ -25,3 +25,5 @@ Modèle Gravitaire (OLS). Modèle Poisson Hurdle (pour gérer les zéros). Appro
 Projet réalisé dans le cadre du cours de Statistique Appliquée (ENSAE) par :
 Louise, Romain, Ishagh, Varnel
 
+
+*Dernière mise à jour : Février 2026*
