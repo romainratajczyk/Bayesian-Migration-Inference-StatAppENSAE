@@ -4,7 +4,13 @@ data/.DS_Store
 #*.csv
 *.xlsx
 .xls
-data/
+#data/
+data/GravityCEPII/
+data/GeoDistCEPII/
+data/OLD_VERSIONS/
+data/data_authors/
+data/data_prediction.csv
+
 
 # Fichiers Python temporaires
 __pycache__/
