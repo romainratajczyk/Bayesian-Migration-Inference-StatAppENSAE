@@ -160,4 +160,39 @@ generated quantities {
     int d_v = dyad_id_test_v[n];
 
     // Hurdle step
-    real logit_p_test = alpha_d[d_h]
+    real logit_p_test = alpha_d[d_h] + dot_product(X_h_test[n], beta_h) + beta_lag_global * is_mig_lag_test[n];
+    prob_mig_test[n] = inv_logit(logit_p_test);
+    is_mig_test_hat[n] = bernoulli_logit_rng(logit_p_test);
+
+    // Volume step (ARX)
+    real mu_dt_test;
+    real ar_pred_test;
+    real sim_sigma;
+
+    if (d_v > 0) {
+      // Existing dyad: use local historical parameters
+      mu_dt_test = alpha_V[d_v] + dot_product(X_v_test[n], beta_grav);
+      sim_sigma = sigma_d[d_v];
+      
+      if (is_mig_lag_test[n] == 1) {
+        ar_pred_test = mu_dt_test + phi_d[d_v] * (log_flow_lag_test[n] - mu_dt_test);
+      } else {
+        ar_pred_test = mu_dt_test;
+      }
+    } else {
+      // New entrant fallback: use global averages and cluster variance
+      mu_dt_test = mu_intercept + dot_product(X_v_test[n], beta_grav);
+      ar_pred_test = mu_dt_test;
+      sim_sigma = sigma_cluster[cluster_h[d_h]]; 
+    }
+    
+    log_flow_test_hat[n] = normal_rng(ar_pred_test, sim_sigma);
+
+    // Recombination
+    if (is_mig_test_hat[n] == 1) {
+      flow_test_hat[n] = exp(log_flow_test_hat[n]);
+    } else {
+      flow_test_hat[n] = 0.0;
+    }
+  }
+}
