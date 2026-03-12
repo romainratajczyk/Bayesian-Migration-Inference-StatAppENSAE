@@ -80,15 +80,15 @@ country_stats <- merge(country_stats, wdi_final, by = c("iso3", "year"), all.x =
 
 # --- D. LA et LL (geo_cepii) ---
 geo_clean <- geo_cepii[, .(LA = mean(area, na.rm=TRUE), LL = max(landlocked, na.rm=TRUE)), by = .(iso3 = toupper(iso3))]
-country_stats <- merge(country_stats, geo_clean, by = "iso3")
+country_stats <- merge(country_stats, geo_clean, by = "iso3", all.x = TRUE)
 
 # 4. ASSEMBLAGE FINAL (DOUBLE JOIN)
 master_dt <- flows[orig %in% top200$iso & dest %in% top200$iso]
-master_dt <- merge(master_dt, iso_map[, .(iso3, country_code)], by.x = "orig", by.y = "iso3") %>% setnames("country_code", "cod_o")
-master_dt <- merge(master_dt, iso_map[, .(iso3, country_code)], by.x = "dest", by.y = "iso3") %>% setnames("country_code", "cod_d")
+master_dt <- merge(master_dt, iso_map[, .(iso3, country_code)], by.x = "orig", by.y = "iso3", all.x = TRUE) %>% setnames("country_code", "cod_o")
+master_dt <- merge(master_dt, iso_map[, .(iso3, country_code)], by.x = "dest", by.y = "iso3", all.x = TRUE) %>% setnames("country_code", "cod_d")
 
 # CORRECTION DANS LES SETNAMES (Attention aux doublons de noms)
-master_dt <- merge(master_dt, country_stats, by.x = c("cod_o", "year0"), by.y = c("country_code", "year"))
+master_dt <- merge(master_dt, country_stats, by.x = c("cod_o", "year0"), by.y = c("country_code", "year"), all.x = TRUE)
 setnames(master_dt, c("P_t", "psr", "IMR_t", "LA", "LL", "urban_t", "PIB", "PIB_lag"), 
          c("P_it", "PSR_i", "IMR_it", "LA_i", "LL_i", "urban_it", "gdp_o", "gdp_o_lag")) # Corrigé : gdp_o et gdp_o_lag
 
