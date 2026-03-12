@@ -108,6 +108,7 @@ master_dt[, `:=`(
 )]
 
 gravity_ready <- master_dt
+gravity_ready <- master_dt[!is.na(cod_o) & !is.na(cod_d)]
 
 # 6. EXPORTATION
 fwrite(gravity_ready, 
