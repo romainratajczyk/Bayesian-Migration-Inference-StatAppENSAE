@@ -58,9 +58,15 @@ country_stats <- merge(country_stats, imr_dt[, .(country_code, year, IMR_t)], by
 
 # --- C. Urbanisation & PIB (WDI) ---
 # Indicateurs : Urbanisation et PIB courant (NY.GDP.MKTP.CD)
-# On part de 1989 pour pouvoir faire le lag de 1990
 wdi_raw <- as.data.table(WDI(indicator = c("urban" = "SP.URB.TOTL.IN.ZS", "gdp" = "NY.GDP.MKTP.CD"), 
                              start = 1989, end = 2015, extra = FALSE))
+
+setnames(wdi_raw, 
+         old = c("iso3c", "SP.URB.TOTL.IN.ZS", "NY.GDP.MKTP.CD"), 
+         new = c("iso3", "urban", "gdp"), 
+         skip_absent = TRUE)
+
+# CORRECTION ICI : WDI renvoie 'iso3c' et non 'iso3'
 wdi_raw <- wdi_raw[!is.na(iso3) & iso3 %in% top200$iso]
 
 # Création du Lag PIB : On décale l'année de +1 pour que la valeur de 1989 matche avec 1990
@@ -81,15 +87,14 @@ master_dt <- flows[orig %in% top200$iso & dest %in% top200$iso]
 master_dt <- merge(master_dt, iso_map[, .(iso3, country_code)], by.x = "orig", by.y = "iso3") %>% setnames("country_code", "cod_o")
 master_dt <- merge(master_dt, iso_map[, .(iso3, country_code)], by.x = "dest", by.y = "iso3") %>% setnames("country_code", "cod_d")
 
-# Doubles jointures avec toutes les variables (dont PIB et PIB_lag)
+# CORRECTION DANS LES SETNAMES (Attention aux doublons de noms)
 master_dt <- merge(master_dt, country_stats, by.x = c("cod_o", "year0"), by.y = c("country_code", "year"))
 setnames(master_dt, c("P_t", "psr", "IMR_t", "LA", "LL", "urban_t", "PIB", "PIB_lag"), 
-         c("P_it", "PSR_i", "IMR_it", "LA_i", "LL_i", "urban_it", "gdp_o_lag", "gdp_o_lag"))
+         c("P_it", "PSR_i", "IMR_it", "LA_i", "LL_i", "urban_it", "gdp_o", "gdp_o_lag")) # Corrigé : gdp_o et gdp_o_lag
 
 master_dt <- merge(master_dt, country_stats, by.x = c("cod_d", "year0"), by.y = c("country_code", "year"))
 setnames(master_dt, c("P_t", "psr", "IMR_t", "LA", "LL", "urban_t", "PIB", "PIB_lag"), 
          c("P_jt", "PSR_j", "IMR_jt", "LA_j", "LL_j", "urban_jt", "gdp_d", "gdp_d_lag"))
-
 # Jointure Bilatérale CEPII
 dist_clean <- dist_cepii[, .(D_ij = mean(distcap, na.rm=TRUE), LB_ij = max(contig, na.rm=TRUE), 
                              OL_ij = max(comlang_off, na.rm=TRUE), COL_ij = max(colony, na.rm=TRUE)), 
