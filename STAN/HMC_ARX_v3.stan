@@ -119,7 +119,7 @@ model {
   mu_intercept   ~ normal(8, 3);
   tau_mu         ~ exponential(1);
   beta_grav      ~ normal(0, 1);
-  phi_global_raw ~ normal(0.5, 0.5); # tanh(0.5) ≈ 0.46 < tanh(1) = 0.76 pour mieux capter l'hétérogénéité.  stationnarité a priori modérée, on ne veut pas Phi(FR>DZA)≈Phi(Thai>MMR) 
+  phi_global_raw ~ normal(0.5, 0.5); // tanh(0.5) ≈ 0.46 < tanh(1) = 0.76 pour mieux capter l'hétérogénéité.  stationnarité a priori modérée, on ne veut pas Phi(FR>DZA)≈Phi(Thai>MMR) 
   tau_phi        ~ exponential(2);
   phi_raw        ~ std_normal();
   mu_raw         ~ std_normal();
