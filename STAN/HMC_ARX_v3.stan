@@ -88,10 +88,24 @@ transformed parameters {
   }
 
   // C — paramétrisation log-normale non-centrée sur sigma_d
-  vector<lower=0>[D_v] sigma_d;
-  for (d in 1:D_v)
-    sigma_d[d] = sigma_cluster[cluster_v[d]] * exp(tau_sigma * sigma_raw[d]);
-
+  // sigma_d : volatilité in-sample (inchangée, utilisée pour la vraisemblance)
+vector<lower=0>[D_v] sigma_d;
+for (d in 1:D_v)
+  sigma_d[d] = fmax(sigma_cluster[cluster_v[d]] * exp(tau_sigma * sigma_raw[d]), 1e-4); // protection numérique contre les sigma=0, aurait fait planter la chaine. 
+                                                                                            // Pas dramatique: La trajectorie aurait été rejetée par Metropolis-Hastings, mais cela peut aider à la convergence et à la santé globale du code. 
+// sigma_d_oos : volatilité à horizon h=1 pas (5 ans) pour la prédiction OOS
+// Formule AR(1) exacte : Var(t+h|t) = sigma² * (1 - phi^2h) / (1 - phi²)
+// Avec h=1 pas de 5 ans, phi^(2*1) = phi² car on a déjà absorbé h dans phi
+// En pratique : sigma_oos = sigma_d * sqrt((1 - phi_d²·phi_d²) / (1 - phi_d²))
+// Simplification robuste : sigma_oos = sigma_d / sqrt(1 - phi_d²)
+// → quand phi→1, sigma_oos → ∞ correctement (très persistant = très incertain)
+vector<lower=0>[D_v] sigma_d_oos;
+for (d in 1:D_v) {
+  real phi2 = square(phi_d[d]);
+  // Protection numérique : si phi très proche de 1, on plafonne
+  real denom = fmax(1.0 - phi2, 0.01);
+  sigma_d_oos[d] = sigma_d[d] / sqrt(denom);
+}
   // Prédicteurs linéaires (vectorisés)
   vector[N_h] logit_p =
     alpha_d[dyad_id_h] + X_h * beta_h + beta_lag_global * is_mig_lag;
@@ -199,14 +213,24 @@ generated quantities {
       } else {
         mu_dt_test[n] = mu_full;
       }
-      sigma_test[n] = sigma_d[d_v];
+      sigma_test[n] = sigma_d_oos[d_v];
 
     } else {
-      // Nouvelle dyade : fallback sur le cluster géographique d'origine
-      // (plus précis que la moyenne globale: c'était bête de pas le faire avant)
-      mu_dt_test[n] = mu_base;
-      sigma_test[n] = sigma_cluster[cluster_test_h[n]];
+  int k = cluster_test_h[n];
+  // On utilise la moyenne des alpha_V des dyades du même cluster
+  // comme intercept de référence pour cette nouvelle dyade
+  real mu_cluster = 0.0;
+  int  n_cluster  = 0;
+  for (d in 1:D_v) {
+    if (cluster_v[d] == k) {
+      mu_cluster += alpha_V[d];
+      n_cluster  += 1;
     }
+  }
+  mu_cluster = (n_cluster > 0) ? mu_cluster / n_cluster : mu_intercept;
+  mu_dt_test[n] = mu_cluster + dot_product(X_v_test[n], beta_grav);
+  sigma_test[n] = sigma_cluster[k];
+}
   }
 
   // Monitoring
