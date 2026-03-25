@@ -174,8 +174,8 @@ model {   // log-vraisemblance et les priors. Le coeur du modèle hiérarchique
   sigma_raw ~ std_normal();
 
   // Vraisemblances
-  is_mig   ~ bernoulli_logit(logit_p);
-  log_flow ~ normal(ar_pred, sigma_d[dyad_id_v]);
+  is_mig   ~ bernoulli_logit(logit_p); // entrainement de la décision Hurdle (ajuste les coeffs beta) sur N_h (tous les flux)
+  log_flow ~ normal(ar_pred, sigma_d[dyad_id_v]); // entrainement du volume sur N_v (conditionné à flux>0) pour avoir le bon AR(1)
 }
 
 generated quantities {    // calculs post-sampling, prédictions in-sample et out-of-sample 
