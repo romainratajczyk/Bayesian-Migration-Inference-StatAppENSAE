@@ -52,7 +52,7 @@ data {  // arguments d'entrée du modèle, préparés en Python: doivent corresp
   int<lower=0, upper=1> do_ppc;  // 1 = activer les prédictions in-sample (PPC), 0 = production
 }
 
-parameters {       // Paramètres à estimer par le modèle 
+parameters {       // Paramètres à estimer par le modèle (échantillonnage ici) 
   // A. Hurdle
   real alpha_global;
   real<lower=0> tau_alpha;
@@ -77,6 +77,7 @@ parameters {       // Paramètres à estimer par le modèle
 }
 
 transformed parameters {     // les paramètres transformés, calculs intermédiaires,  utilisés pour la vraisemblance et les prédictions
+          // équations hiérarchiques ici, juste avant de calculer la log-vraisemblance et conclure avec Metropolis  
   // A
   vector[D_h] alpha_d;
   for (d in 1:D_h)
@@ -88,7 +89,7 @@ transformed parameters {     // les paramètres transformés, calculs intermédi
   vector[D_v] phi_d;
   for (d in 1:D_v) {
     alpha_V[d] = mu_intercept + tau_mu * mu_raw[d];
-    phi_d[d]   = tanh(phi_global_raw + tau_phi * phi_raw[d]);
+    phi_d[d]   = tanh(phi_global_raw + tau_phi * phi_raw[d]); // garanti prior modéré et autour de 0.5, et stationnaire
   }
 
   // C — paramétrisation log-normale non-centrée sur sigma_d
@@ -112,7 +113,7 @@ transformed parameters {     // les paramètres transformés, calculs intermédi
     // Formule exacte à h=1 pas AR(1) : sigma * sqrt(1 + phi²) (la valeur de demain dépend d'aujoiurd'hui, mais a EN plus sa propre incertidude)
    
     // Avec phi=0.95 : facteur = sqrt(1 + 0.90) ≈ 1.38 
-    
+
     // Plafond à 3×sigma_d pour éviter les explosions numériques
 
     real inflation = sqrt(1.0 + square(phi_d[d]));
