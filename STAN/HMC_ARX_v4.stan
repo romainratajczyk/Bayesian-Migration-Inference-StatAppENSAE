@@ -57,7 +57,7 @@ parameters {       // Paramètres à estimer par le modèle (échantillonnage ic
   real alpha_global;
   real<lower=0> tau_alpha;
   vector[K_h] beta_h;
-  real beta_lag_global;
+  vector[K_clusters] beta_lag_continent;
   vector[D_h] alpha_raw;
 
   // B. Volume ARX
@@ -121,8 +121,12 @@ transformed parameters {     // les paramètres transformés, calculs intermédi
   }
 
   // Prédicteurs linéaires (vectorisés)
-  vector[N_h] logit_p =
-    alpha_d[dyad_id_h] + X_h * beta_h + beta_lag_global * is_mig_lag;
+  vector[N_h] lag_effect;
+  for (n in 1:N_h) {
+  // On va chercher le continent de la dyade, puis on applique l'inertie
+    lag_effect[n] = beta_lag_continent[cluster_h[dyad_id_h[n]]] * is_mig_lag[n];
+  }
+  vector[N_h] logit_p = alpha_d[dyad_id_h] + X_h * beta_h + lag_effect;
 
   vector[N_v] mu_dt = alpha_V[dyad_id_v] + X_v * beta_grav;
 
@@ -158,7 +162,7 @@ model {   // log-vraisemblance et les priors. Le coeur du modèle hiérarchique
   beta_h[1]       ~ normal(-1, 1);
   beta_h[2]       ~ normal(2, 1);
   beta_h[3]       ~ normal(0.5, 1);
-  beta_lag_global ~ normal(1.5, 1);
+  beta_lag_continent ~ normal(1.5, 1); // OK on a déjà observé des valeurs >5 voir 6, mais attention à l'Empirical Bayes "mal assumé": on utilise pas les posteriors pour informer le prior. 
   alpha_raw       ~ std_normal();
 
   // B — Priors volume
@@ -234,7 +238,7 @@ generated quantities {    // calculs post-sampling, prédictions in-sample et ou
     // Hurdle : P(flow > 0)
     real logit_p_test = alpha_d[d_h]
                         + dot_product(X_h_test[n], beta_h)
-                        + beta_lag_global * is_mig_lag_test[n];
+                        + beta_lag_continent[cluster_test_h[n]] * is_mig_lag_test[n];
     prob_mig_test[n] = inv_logit(logit_p_test);
 
     // Volume : mu_dt et sigma (paramètres suffisants pour la reconstruction Python)
