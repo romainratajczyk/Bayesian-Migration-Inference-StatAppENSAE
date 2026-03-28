@@ -81,15 +81,11 @@ L'espace des postérieurs bayésiens est analogue à un paysage énergétique en
    * Il assemble tout ça avec les variables géoéconomiques ($X$, PIB, etc.) pour calculer le $\mu_{d,t}^{(s)}$.
    * Puis, il utilise cette valeur pour évaluer la distance par rapport aux vrais flux via la loi Volume :
 
-   $$
-   \log(\text{flow}) \sim \mathcal{N}(\mu_{d,t}^{(s)} + \phi_{d}^{(s)} (\text{lag} - \mu_{d,t-1}^{(s)}), \sigma_{d}^{(s)})
-   $$
+   $$\log(\text{flow}) \sim \mathcal{N}(\mu_{d,t}^{(s)} + \phi_{d}^{(s)} (\text{lag} - \mu_{d,t-1}^{(s)}), \sigma_{d}^{(s)})$$
 
 3. À la position d'arrivée, Stan évalue l'acceptation via Metropolis-Hastings en vérifiant la conservation de l'énergie totale ($H$) :
 
-   $$
-   P(\text{acceptation}) = \min(1, \exp(-\Delta H))
-   $$
+   $$P(\text{acceptation}) = \min(1, \exp(-\Delta H))$$
 
 Si la position est cohérente ($\Delta H \approx 0$), les paramètres sont acceptés et inscrits dans les chaînes de Markov.
 
