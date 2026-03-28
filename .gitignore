@@ -10,7 +10,7 @@ data/GeoDistCEPII/
 data/OLD_VERSIONS/
 data/data_authors/
 data/data_prediction.csv
-
+notebooks/stan_outputs
 
 # Fichiers Python temporaires
 __pycache__/
