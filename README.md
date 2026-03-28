@@ -13,7 +13,7 @@ Notre stratégie de modélisation s'articule autour de trois grandes étapes :
    * Détecter les effets de seuil et les interactions complexes entre variables.
    * Analyser les cartes de résidus (comprendre géographiquement où le modèle se trompe).
    * Extraire les *feature importances*.
-3. **L'Inférence Bayésienne Hiérarchique :** Les découvertes issues du Machine Learning sont ensuite injectées dans notre modèle statistique final (ARX Hurdle Bayésien) pour modéliser l'hétéroscédasticité par dyade, informer les priors, disposer des bonnes variables économétriques, et obtenir des prédictions robustes (*Empricial Bayes*).
+3. **L'Inférence Bayésienne Hiérarchique :** Les découvertes issues du Machine Learning sont ensuite injectées dans notre modèle final (ARX Hurdle Bayésien) pour modéliser l'hétéroscédasticité par dyade, informer les priors, disposer des bonnes variables économétriques, et obtenir des prédictions robustes (*Empricial Bayes*).
 
 ## 🎯 La finalité : disposer de deux modèles robustes, aux ambitions différentes.
 
@@ -41,7 +41,87 @@ Nous avons récemment concentré nos efforts sur le modèle **ARX Hurdle Bayési
 * **Perfection du Hurdle :** Auditer les derniers % de précision (les cygnes noirs) pour tenter de viser les 99% d'Accuracy, les 96% de précision obtenues étant déjà assez spectaculaire sur tant de dyades variées.  
 * **Scale-up Mondial :** Lancement de l'inférence HMC sur la matrice mondiale complète (190 pays) via le cluster de calcul Onyxia (GENES). Cette mise à l'échelle devrait mécaniquement écraser notre MAE globale et nous positionner au-delà de l'état de l'art actuel, qui ne dispose pas d'explication économétrique des chocs, et est davantage focalisé sur la prédiction de long-terme.
 
-  
+# Annexe technique : Bayesian Hierarchical ARX Hurdle Model (notre modèle de prédiction court-terme)
+
+Cette section détaille l'architecture mathématique et les choix d'inférence de notre modèle bayésien. Pour ceux qui souhaitent comprendre le moteur interne de notre code Stan et la méthodologie de prédiction.
+
+### 1. Architecture en deux étapes (Hurdle-Volume)
+
+Le modèle traite la migration bilatérale en deux étapes séquentielles pour contourner la double difficulté des flux nuls (49% du dataframe) et de la forte variance des grands couloirs.
+
+#### A. Composante Hurdle (Proba d'Ouverture de la route)
+Régression logistique (Bernoulli) estimant la probabilité qu'un flux migratoire strictement positif existe entre les pays $i$ et $j$.
+
+$$\text{logit}(P(\text{flow}>0))=\alpha_d+X_h\beta_h+\beta_{\text{lag}}\text{is\_mig\_lag}$$
+
+Où $X_h$ inclut les variables les plus importantes et pertinentes pour le Hurdle (notamment les features les plus importantes indiquées par un Random Forest entraîné): (frontière commune, $\log(\text{distance})$, PIB/tête à la date t-1, populations...). Sans pour autant répliquer complètement le modèle de gravité (le but est l'*existence ou non* d'une route, pas son *volume*). Si le modèle prédit une fermeture, le flux prédit est 0 net. S'il prédit une ouverture, on passe à la composante Volume.
+
+#### B. Composante Volume (Processus ARX Log-Normal)
+Pour les dyades actives, le volume est modélisé par un processus auto-régressif conditionnel à la dyade :
+
+$$\log(\text{flow})\sim\mathcal{N}(\mu_{d,t}+\phi_d(\text{lag}-\mu_{d,t-1}),\sigma_d)$$
+
+L'espérance de base $\mu_{d,t}$ intègre les variables gravitaires classiques et les variables non-linéaires découvertes lors de la phase d'exploration par Machine Learning :
+
+$$\mu_{d,t}=\alpha_{V,d}+X\beta_{\text{grav}}+\beta_{\text{gdp}}\log(\text{gdpcap\_o})+\beta_{\text{rich}}\text{is\_rich\_o}$$
+
+*(Note : `is_rich_o` encode un effet de seuil détecté par Random Forest autour de 18 000 $ de PIB/habitant à partir duquel l'émigration augmente brusquement pour le pays d'origine).*
+
+
+
+### 2. Inférence par Hamiltonian Monte Carlo (HMC)
+
+Contrairement aux approches par échantillonnage de Gibbs (JAGS) ou marche aléatoire aveugle (Metropolis), l'utilisation de Stan (HMC) est cruciale ici pour explorer un espace de paramètres de très haute dimension (~90 000 dimensions) sans rester piégé.
+
+**Le paysage énergétique et la mécanique hamiltonienne**
+L'espace des postérieurs bayésiens est analogue à un paysage énergétique en physique où la log-vraisemblance définit l'énergie potentielle (les "puits" sont les zones de forte probabilité ici). À chaque itération $s$ :
+1. L'algorithme reçoit une impulsion cinétique aléatoire.
+2. Il simule une trajectoire déterministe le long du gradient de probabilité via les équations de Hamilton.
+3. À la position d'arrivée, Stan évalue l'acceptation via Metropolis-Hastings en vérifiant la conservation de l'énergie totale ($H$) :
+
+$$P(\text{acceptation})=\min(1,\exp(-\Delta H))$$
+
+Si la position est cohérente ($\Delta H\approx0$), les paramètres sont acceptés et inscrits dans les chaînes de Markov.
+
+**Stabilité géométrique (Non-centered parameterization)**
+Pour éviter les géométries en entonnoir qui font diverger/bloquent les chaînes de Markov, le modèle hiérarchique est codé via une paramétrisation décentrée (*transformed parameters*). Stan ne tire pas directement dans la loi normale de la dyade, il tire un bruit pur (`raw`) qu'il multiplie par la variance du cluster ($\tau$) :
+* **Intercept dyadique :** $\alpha_{V,d}=\mu_{\text{intercept}}+\tau_{\mu}\times\mu_{\text{raw}}[d]$
+* **Inertie AR1 :** $\phi_d=\tanh(\phi_{\text{global\_raw}}+\tau_{\phi}\times\phi_{\text{raw}}[d])$
+* **Variance hétéroscédastique :** $\sigma_d=\sigma_{\text{cluster}}[\text{continent\_origine}]\times\exp(\tau_{\sigma}\times\sigma_{\text{raw}}[d])$
+
+
+
+### 3. Pipeline de Prédiction
+
+Une fois l'inférence terminée, les matrices de paramètres (ex: 1200 itérations conservées, entraînement sur 1990-2010) sont extraites. NumPy prend la relève pour vectoriser les équations sur les données hors-échantillon (ex: test sur 2015).
+
+**Le choix de la Médiane vs l'Espérance**
+Dans un modèle log-normal, l'espérance mathématique est $\exp(\mu+\sigma^2/2)$. Sur des couloirs instables (comme MEX-USA), il a été observé un grand $\sigma_d$ amplifié par l'inflation auto-régressive $(1+\phi^2)$ ce qui a propulsé les prédictions à des valeurs absurdes (ex: 25 millions de migrants) en tentant de minimiser la *Mean Squared Error* (MSE).
+
+Hors, l'objectif macroéconomique et décisionnel est de minimiser l'erreur absolue en nombre d'humains, pas en humains au carré. Ainsi nous extrayons la médiane $\exp(\mu)$ de nos matrices de prédiction, qui est le minimiseur naturel de la norme L1 (MAE).
+
+
+
+### 4. Choix Méthodologiques et Discussions
+
+* **Synergie ML $\rightarrow$ Bayésien :** Le modèle bayésien n'est pas construit à l'aveugle. Il intègre directement les enseignements de nos modèles XGBoost et Random Forest : effets de seuils sur le PIB, interactions spatiales validées par PDP ($\log(\text{Distance})\times\text{Frontière}$), et hétéroscédasticité géographique modélisée au niveau continental pour absorber les résidus systématiques détectés en Afrique et en Asie (sur des cartes de résidus mondiales, cf challenge_gravity_ML.ipynb).
+* **Le problème des zéros :** L'approche Hurdle a été préférée à la transformation $\log(x+1)$ (qui est scientifiquement instable). Forcer une loi normale continue à gérer un pic massif à zéro provoque une divergence de la variance temporelle. Le Hurdle isole le problème structurellement.
+* **Évaluation (OOS) :** Entraîné sur la période 1990-2010 et testé sur 2015. Nous utilisons le WMAPE, et la MAPE modifiée de Welch & Raftery (divisée par $y+1$) pour un benchmark fidèle face à la littérature (Welch&Raftery). La couverture spatiale des intervalles de crédibilité (IC) bénéficie beaucoup de l'hétéroscédasticité : étroits en Europe (+/- 30%), ils s'élargissent logiquement sur les couloirs volatiles d'Asie et d'Afrique (+/-150%).
+* **La limite des micro-flux :** Le modèle présente un biais théorique inhérent à la loi log-normale sur les flux continus de 1 à 10 migrants. Si un modèle de comptage (ex: Negative Binomial) traiterait mieux ces micro-flux, l'ajout d'un modèle pour les flux intermédiaires nous semble trop *ad-hoc* et perturberait certainement la stabilité de nos simulations. Surtout, ces micro-flux sont macro-économiquement non pertinents et résultent de bruit statistique: on assume alors que notre modèle n'est pas adapté à la prédiction sur les micro-flux.  
+
+
+
+### 5. Dimensions de l'Espace des Paramètres
+
+L'inférence simultanée repose sur une très-haute-dimension pour 190 pays) :
+* **Partie Hurdle ($D_h$) :** $\sim 35 000$ dimensions ($\alpha_{\text{raw}}$ par dyade).
+* **Partie Volume ($D_v$) :** Environ 50% des dyades sont actives. Chacune requiert un $\mu_{\text{raw}}$, un $\phi_{\text{raw}}$ et un $\sigma_{\text{raw}}$, soit $\sim 53 000$ dimensions.
+* **Paramètres globaux & Clusters :** Vecteurs $\beta_h$ (3 variables), $\beta_{\text{grav}}$ (~20 variables), variances par continent (6 dimensions), et hyper-paramètres globaux ($\mu$, $\tau$).
+
+**Total :** $\sim 90 000$ dimensions explorées simultanément par Hamiltonian Monte Carlo.  
+Estimation RAM: 64-128 Giga pour être très confortable et robuste aux pics et aux *Silent Kills* du cluster.
+
+
 ***Auteurs***
 
 Projet réalisé dans le cadre du cours de Statistique Appliquée (ENSAE) par :
