@@ -1,54 +1,47 @@
-***Bayesian Prediction of Migration Flows*** [Dépôt GitHub - Projet Migration](https://github.com/IshaghCheikh/ProjetStat/tree/main)
 
-Ce projet a pour objectif de modéliser et prédire les flux migratoires internationaux bilatéraux. Il s'appuie sur une réplication du modèle de gravité de Welch et Raftery (2022) comme point de référence, pour ensuite explorer des approches plus complexes (modèles bayésiens hiérarchiques (MCMC), Machine Learning (Random Forests, XGBoost) ).
+# Prédiction bayésienne des flux migratoires internationaux 
+[Dépôt GitHub - Projet Migration](https://github.com/IshaghCheikh/ProjetStat/tree/main)
 
-***Objectifs du Projet***
+Ce projet a pour objectif de comprendre la dynamique des flux migratoires internationaux bilatéraux et d'en prédire l'évolution. Face à la complexité de la réalité macroéconomique et statistique des flux, nous déployons une méthodologie progressive : d'un modèle de gravité standard vers des algorithmes de Machine Learning, pour aboutir à une modélisation bayésienne hiérarchique de pointe.
 
-**Réplication** (Benchmark) : Implémenter le modèle de gravité log-linéaire standard pour comprendre les déterminants classiques (distance, population, liens coloniaux, etc.).
-**Gestion des Données Manquantes** : Résoudre le problème des flux nuls ($log(0)$) et des discontinuités dans les séries temporelles (ex: PIB, taux de mortalité infantile).
-**Comparaison de Modèles**: 
-Modèle Gravitaire (OLS). Modèle Poisson Hurdle (pour gérer les zéros). Approche Bayésienne Hiérarchique (Azose & Raftery) pour capturer l'inertie migratoire et améliorer la prédiction. Machine Learning (Random Forest,XGBoost) pour tester la non-linéarité (en cours). 
+## 🔬 Notre démarche scientifique 
 
-***Données Utilisées***
+Notre stratégie de modélisation s'articule autour de trois grandes étapes :
 
-**Flux Migratoires ($m_{ijt}$)** : Estimations pseudo-bayésiennes par Azose & Raftery (2019), basées sur les stocks de migrants et l'équation d'équilibre démographique.
-**Covariables (Variables explicatives)** : Base de données Gravity du CEPII. Variables géographiques (Distance, Contiguïté). Variables socio-économiques (Population, PIB, Mortalité Infantile - IMR, Ratio de Soutien Potentiel - PSR). 
+1. **Le Benchmark Gravitaire :** Implémentation d'un modèle de gravité log-linéaire classique (OLS) pour capturer les déterminants standards (distance, PIB, liens coloniaux). Cette étape sert de point de référence.
+2. **L'Exploration Non-Linéaire (Machine Learning) :** Utilisation de modèles ensemblistes (Random Forest, XGBoost) pour challenger la linéarité du modèle de gravité. Cette étape s'est révélée cruciale pour :
+   * Détecter les effets de seuil et les interactions complexes entre variables.
+   * Analyser les cartes de résidus (comprendre géographiquement où le modèle se trompe).
+   * Extraire les *feature importances*.
+3. **L'Inférence Bayésienne Hiérarchique :** Les découvertes issues du Machine Learning sont ensuite injectées dans notre modèle statistique final (ARX Hurdle Bayésien) pour modéliser l'hétéroscédasticité par dyade, informer les priors, disposer des bonnes variables économétriques, et obtenir des prédictions robustes (*Empricial Bayes*).
 
-**Réplication du Modèle Gravitaire** : $R^2$ de 0.49 obtenu sur les données incomplètes, complétion des données en cours (finalisation prévue semaine du 16 Février.)   
-**Enrichissement des Données (En cours)** :Intégration robuste du PIB (GDP) et du PIB par habitant (lags inclus) depuis la base CEPII.   Correction des problèmes de chargement de données (récupération des pays manquants comme la Nouvelle-Zélande ou les Pays-Bas, dont l'absence de donnée est absurde, et doit résulter d'un bug technique). Stratégie de "Rectangularisation" pour conserver les flux nuls (zéros) dans le dataset d'entraînement.   
- 
+## 🎯 La finalité : disposer de deux modèles robustes, aux ambitions différentes.
 
-Modèles de Machine Learning (RF & XGBoost) : Utilisés pour explorer et capter les effets non-linéaires complexes (ex: effet seuil du PIB, interaction distance/frontière commune) afin d'informer et d'améliorer nos équations économétriques.  
+L'objectif in fine est de doter les décideurs publics d'un outil de prévision complet, reposant sur deux modèles complémentaires :
 
-# ***État d'Avancement (Current Status)*** 
+* **Le Pilier "Temps Long" (Modèle Welch & Raftery) :** Une réplication du modèle de référence OutFlow/Allocation. La méthodologie repose sur le calcul d'un taux de départ global par pays d'origine, dont le volume est ensuite réparti dans le monde via une distribution multinomiale. Ce modèle n'utilise aucune variable économétrique, seulement les masses de population. Il gère parfaitement la nature discrète des flux (nombres entiers) et s'avère extrêmement pertinent pour des projections de très longue durée (2050, 2100 et au-delà en théorie).  
+* **Le Pilier "Temps Court" (Notre Modèle ARX Hurdle) :** Un modèle bayésien de gravité bilatérale, hautement réactif à l'économétrie et préparé aux chocs macro-démographiques. Pensé pour la précision à court terme (<=5 ans), son objectif est de produire des prévisions extrêmement précises (visant une erreur MAE globale < 1 000 migrants).  
 
-## **Modélisation Bayésienne (via Stan (Hamiltonian Monte Carlo):**  
+## 📊 Données Utilisées
 
-Deux approches complémentaires répondant à deux objectifs différents :  
+* **Flux Migratoires :** Estimations pseudo-bayésiennes (Azose & Raftery, 2019) basées sur les stocks mondiaux et l'équilibre démographique.  
+* **Covariables Macroéconomiques :** Base de données Gravity (CEPII) enrichie. Intégration de variables géographiques (distance, frontières) et socio-économiques (Population, PIB et ses retards, Mortalité Infantile, Ratio de Soutien Potentiel). 
 
+## 🚀 État d'Avancement et Découvertes Récentes
 
-Le modèle Outflow/Allocation (Réplication Welch & Raftery 2022) : Une approche macro-démographique très inertielle. S'il est moins précis pour capter les chocs de court terme, c'est le modèle taillé pour les projections de très longue durée (2050, 2100 et au-delà en théorie).  
+Nous avons récemment concentré nos efforts sur le modèle **ARX Hurdle Bayésien**, échantillonné via Hamiltonian Monte Carlo (Stan) :
 
+* **Succès de l'architecture "Hurdle" :** Le modèle excelle dans la prédiction de l'ouverture ou de la fermeture des routes migratoires (Accuracy > 96%). Les derniers % restants sont des *cygnes noirs*, imprévisibles. L'idée d'estimer l'inertie *par continent* plutôt que *globalement* a été un succès: par exemple, dans l'espace Schengen, le modèle comprend qu'une route ouverte reste ouverte. Il est en revanche plus souple sur la fermeture éventuelle d'un couloir précédemment ouvert en Afrique ou en Asie.  
+* **Gestion de la variance :** La modélisation de l'hétéroscédasticité par continent et les prédictions avec la médiane (minimiseur de la norme L1) ont permis d'empêcher l'explosion mathématique des prédictions sur les dyades instables. Sur un panel de test de 70 à 140 pays, les métriques d'erreur (MAE) et de *coverage* des intervalles de confiance sont très encourageantes.  
+* **Le défi des micro-flux :** L'utilisation d'une loi continue (log-normale) se heurte mathématiquement à la nature discrète des micro-flux (couloirs de 1 à 10 personnes), générant un biais de variance. Cependant, ce bruit statistique inhérent aux bases de données n'impacte pas l'utilité du modèle : ces micro-flux ne sont pas pertinents d'un point de vue macroéconomique pour les décideurs publiques. On assume alors ces erreurs, sans vouloir simplement les supprimer *ou* implémenter un modèle ad-hoc destiné à les gérer.   
 
-Notre modèle ARX Hurdle (Approche purement dyadique) : Un modèle bilatéral de gravité, pensé pour la précision à court/moyen terme. Il comprend bien les variables économétriques (PIB, géographie) pour expliquer pourquoi les migrants partent vers une destination précise, et est capable d'anticiper des chocs socio-économiques et démographiques.   
+## ⏭️ Prochaines Étapes immédiates
 
+* **Intégration des Chocs Géopolitiques :** Ajout de données de conflits (ex: base UCDP) pour casser l'inertie auto-régressive du modèle et mieux anticiper les crises migratoires soudaines. Pour le moment, le modèle montre ces limites en prédiction sur 2015 à cause du manque d'anticipation des crises ayant lieu entre 2010 et 2015 (crise en Syrie, guerre civile, chute de Kadhafi en Libye...)  
+* **Perfection du Hurdle :** Auditer les derniers % de précision (les cygnes noirs) pour tenter de viser les 99% d'Accuracy, les 96% de précision obtenues étant déjà assez spectaculaire sur tant de dyades variées.  
+* **Scale-up Mondial :** Lancement de l'inférence HMC sur la matrice mondiale complète (190 pays) via le cluster de calcul Onyxia (GENES). Cette mise à l'échelle devrait mécaniquement écraser notre MAE globale et nous positionner au-delà de l'état de l'art actuel, qui ne dispose pas d'explication économétrique des chocs, et est davantage focalisé sur la prédiction de long-terme.
 
-Victoires récentes : Succès de la composante "Hurdle" pour prédire l'ouverture/fermeture des routes (Accuracy > 96%), modélisation de l'hétéroscédasticité par continent pour des intervalles de confiance réalistes, et utilisation de la médiane (norme L1) pour empêcher l'explosion mathématique des prédictions sur les dyades instables.  
-Erreurs MAE et Coverage très encourageants sur seulement 70 pays, simulations en cours sur 190 pays. 
-
-
-### Prochaines étapes (Perspectives) :  
-
-
-Chocs géopolitiques : Intégration de variables de conflits (ex: base UCDP) dans le modèle dyadique pour casser la "paresse" auto-régressive et mieux anticiper les crises soudaines de notre année de test (2015).  
-
-
-Perfectionnement du Hurdle : Régionaliser l'inertie des routes (un paramètre par continent au lieu d'un global) pour frôler les 98-99% de précision sur la détection des flux non-nuls.  
-
-
-Scale-up mondial (Onyxia - GENES) : simulation HMC d'envergure sur 190 pays via le cluster Onyxia EN COURS. On devrait mécaniquement tirer notre erreur absolue (MAE) vers zéro pour venir battre l'état de l'art.  
-
-
+  
 ***Auteurs***
 
 Projet réalisé dans le cadre du cours de Statistique Appliquée (ENSAE) par :
@@ -56,3 +49,4 @@ Louise, Romain, Ishagh, Varnel
 
 
 *Dernière mise à jour : Mars 2026*
+
