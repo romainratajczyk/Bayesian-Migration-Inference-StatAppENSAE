@@ -90,7 +90,7 @@ Pour éviter les géométries en entonnoir qui font diverger/bloquent les chaîn
 
 * **Inertie AR1 :**
 
-  $$\phi_{d} = \tanh(\phi_{\text{global\_raw}} + \tau_{\phi} \times \phi_{\text{raw}}[d])$$
+  $$\phi_{d} = \tanh(\phi_{\text{global_\text{raw}}} + \tau_{\phi} \times \phi_{\text{raw}}[d])$$
 
 * **Variance hétéroscédastique :**
 
