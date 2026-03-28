@@ -88,10 +88,10 @@ Pour éviter les géométries en entonnoir qui font diverger/bloquent les chaîn
   $$\alpha_{V,d} = \mu_{\text{intercept}} + \tau_{\mu} \times \mu_{\text{raw}}[d]$$
 
 * **Inertie AR1 :**
-  $$\phi_{d} = \tanh(\phi_{\text{global\_raw}} + \tau_{\phi} \times \phi_{\text{raw}}[d])$$
+  $$\phi_{d} = \tanh(\phi_{\text{global\\_raw}} + \tau_{\phi} \times \phi_{\text{raw}}[d])$$
 
 * **Variance hétéroscédastique :**
-  $$\sigma_{d} = \sigma_{\text{cluster}}[\text{continent\_origine}] \times \exp(\tau_{\sigma} \times \sigma_{\text{raw}}[d])$$
+  $$\sigma_{d} = \sigma_{\text{cluster}}[\text{continent\\_origine}] \times \exp(\tau_{\sigma} \times \sigma_{\text{raw}}[d])$$
 
 ### 3. Méthode de prédiction
 
