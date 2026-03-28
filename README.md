@@ -75,10 +75,21 @@ Contrairement aux approches par échantillonnage de Gibbs (JAGS) ou marche aléa
 **Le paysage énergétique et la mécanique hamiltonienne**
 L'espace des postérieurs bayésiens est analogue à un paysage énergétique en physique où la log-vraisemblance définit l'énergie potentielle (les "puits" sont les zones de forte probabilité ici). À chaque itération $s$ :
 1. L'algorithme reçoit une impulsion cinétique aléatoire.
-2. Il simule une trajectoire déterministe le long du gradient de probabilité via les équations de Hamilton.
+
+2. Il simule une trajectoire déterministe le long du gradient de probabilité via les équations de Hamilton. Au moment d'une micro-étape (itération $s$), le moteur Stan fait concrètement ceci :
+   * Il prend les valeurs `raw` tirées du bruit (des priors qui peuvent être faiblements informatifs, ou légèrement calibrés par Empirical Bayes) et les multiplie par les $\tau$ pour construire l'état de chaque couloir : $\alpha_{V,d}^{(s)}$, $\phi_{d}^{(s)}$ et $\sigma_{d}^{(s)}$.
+   * Il assemble tout ça avec les variables géoéconomiques ($X$, PIB, etc.) pour calculer le $\mu_{d,t}^{(s)}$.
+   * Puis, il utilise cette valeur pour évaluer la distance par rapport aux vrais flux via la loi Volume :
+
+   $$
+   \log(\text{flow}) \sim \mathcal{N}(\mu_{d,t}^{(s)} + \phi_{d}^{(s)} (\text{lag} - \mu_{d,t-1}^{(s)}), \sigma_{d}^{(s)})
+   $$
+
 3. À la position d'arrivée, Stan évalue l'acceptation via Metropolis-Hastings en vérifiant la conservation de l'énergie totale ($H$) :
 
-$$P(\text{acceptation}) = \min(1, \exp(-\Delta H))$$
+   $$
+   P(\text{acceptation}) = \min(1, \exp(-\Delta H))
+   $$
 
 Si la position est cohérente ($\Delta H \approx 0$), les paramètres sont acceptés et inscrits dans les chaînes de Markov.
 
