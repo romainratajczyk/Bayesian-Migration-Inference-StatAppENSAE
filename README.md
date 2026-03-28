@@ -37,7 +37,7 @@ Nous avons récemment concentré nos efforts sur le modèle **ARX Hurdle Bayési
 
 ## ⏭️ Prochaines Étapes immédiates
 
-* **Intégration des Chocs Géopolitiques :** Ajout de données de conflits (ex: base UCDP) pour casser l'inertie auto-régressive du modèle et mieux anticiper les crises migratoires soudaines. Pour le moment, le modèle montre ces limites en prédiction sur 2015 à cause du manque d'anticipation des crises ayant lieu entre 2010 et 2015 (crise en Syrie, guerre civile, chute de Kadhafi en Libye...)  
+* **Intégration des Chocs Géopolitiques :** Ajout de données de conflits (ex: base UCDP) pour casser l'inertie auto-régressive du modèle et mieux anticiper les crises migratoires soudaines. Pour le moment, le modèle montre ces limites en prédiction (OOS) sur 2015 à cause du manque d'anticipation des crises ayant lieu entre 2010 et 2015 (crise en Syrie, guerre civile, chute de Kadhafi en Libye...)  
 * **Perfection du Hurdle :** Auditer les derniers % de précision (les cygnes noirs) pour tenter de viser les 99% d'Accuracy, les 96% de précision obtenues étant déjà assez spectaculaire sur tant de dyades variées.  
 * **Scale-up Mondial :** Lancement de l'inférence HMC sur la matrice mondiale complète (190 pays) via le cluster de calcul Onyxia (GENES). Cette mise à l'échelle devrait mécaniquement écraser notre MAE globale et nous positionner au-delà de l'état de l'art actuel, qui ne dispose pas d'explication économétrique des chocs, et est davantage focalisé sur la prédiction de long-terme.
 
