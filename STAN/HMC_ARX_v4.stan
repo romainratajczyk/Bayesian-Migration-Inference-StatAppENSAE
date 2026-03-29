@@ -135,24 +135,6 @@ transformed parameters {     // les paramètres transformés, calculs intermédi
     int d = dyad_id_v[n];
     ar_pred[n] = mu_dt[n] + phi_d[d] * (log_flow_lag[n] - mu_dt[n]);
   }
-
-  // Moyenne de alpha_V par cluster — précalculée ici pour éviter la boucle
-  // O(N_test × D_v) dans generated quantities (le vrai goulot d'étranglement à 190 pays)
-  vector[K_clusters] mu_cluster_k;
-  {
-    vector[K_clusters] n_cluster_k = rep_vector(0.0, K_clusters);
-    mu_cluster_k = rep_vector(0.0, K_clusters);
-    for (d in 1:D_v) {
-      mu_cluster_k[cluster_v[d]] += alpha_V[d];
-      n_cluster_k[cluster_v[d]]  += 1.0;
-    }
-    for (k in 1:K_clusters) {
-      if (n_cluster_k[k] > 0)
-        mu_cluster_k[k] /= n_cluster_k[k];
-      else
-        mu_cluster_k[k] = mu_intercept;
-    }
-  }
 }
 
 model {   // log-vraisemblance et les priors. Le coeur du modèle hiérarchique 
@@ -183,7 +165,7 @@ model {   // log-vraisemblance et les priors. Le coeur du modèle hiérarchique
   sigma_global ~ exponential(1);
   for (k in 1:K_clusters)
     sigma_cluster[k] ~ normal(sigma_global, 0.5);
-  tau_sigma ~ exponential(0.2); // à tester exponential(0.5) passé à exponential(0.2) moins informatif pour coverage moins étroits (esperance = 1/lambda) 
+  tau_sigma ~ exponential(0.4); // à tester exponential(0.5) passé à exponential(0.2) moins informatif pour coverage moins étroits (esperance = 1/lambda) 
   sigma_raw ~ std_normal();
 
   // Vraisemblances
@@ -231,7 +213,28 @@ generated quantities {    // calculs post-sampling, prédictions in-sample et ou
   // Cela évite de stocker N_test * iter * chains valeurs dans les .csv Stan
   // mu_cluster_k précalculé dans transformed parameters : la boucle O(N_test × D_v)
   // qui paralysait le sampler à 190 pays est supprimée
-  //
+  
+
+
+  // Moyenne de alpha_V par cluster — précalculée ici pour éviter la boucle
+  // O(N_test × D_v) dans generated quantities (le vrai goulot d'étranglement à 190 pays)
+  vector[K_clusters] mu_cluster_k;
+  {
+    vector[K_clusters] n_cluster_k = rep_vector(0.0, K_clusters);
+    mu_cluster_k = rep_vector(0.0, K_clusters);
+    for (d in 1:D_v) {
+      mu_cluster_k[cluster_v[d]] += alpha_V[d];
+      n_cluster_k[cluster_v[d]]  += 1.0;
+    }
+    for (k in 1:K_clusters) {
+      if (n_cluster_k[k] > 0)
+        mu_cluster_k[k] /= n_cluster_k[k];
+      else
+        mu_cluster_k[k] = mu_intercept;
+    }
+  }
+
+
   vector[N_test] prob_mig_test;    // P(flow > 0) pour chaque obs test
   vector[N_test] mu_dt_test;       // Espérance conditionnelle (log-échelle)
   vector[N_test] sigma_test;       // sigma utilisé pour chaque obs test
