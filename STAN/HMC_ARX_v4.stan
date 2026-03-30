@@ -149,7 +149,7 @@ model {   // log-vraisemblance et les priors. Le coeur du modèle hiérarchique
   beta_h[6]       ~ normal(0.5, 1);  // log_pop_o (Masse démo origine)
   beta_h[7]       ~ normal(0.5, 1);  // log_pop_d (Masse démo destination)
   beta_h[8]       ~ normal(0.5, 1);  // log_gdp_d (Attractivité richesse destination)
-  beta_lag_continent ~ normal(1.5, 1); // OK on a déjà observé des valeurs >5 voir 6, mais attention à l'Empirical Bayes "mal assumé": on utilise pas les posteriors pour informer le prior. 
+  beta_lag_continent ~ normal(3.0, 2.5); // OK on a déjà observé des valeurs >5 voir 6, mais attention à l'Empirical Bayes "mal assumé": on utilise pas les posteriors pour informer le prior. 
   alpha_raw       ~ std_normal();
 
   // B — Priors volume
