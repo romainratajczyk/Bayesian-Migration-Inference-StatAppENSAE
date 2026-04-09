@@ -13,14 +13,14 @@ Notre stratégie de modélisation s'articule autour de trois grandes étapes :
    * Détecter les effets de seuil et les interactions complexes entre variables.
    * Analyser les cartes de résidus (comprendre géographiquement où le modèle se trompe).
    * Extraire les *feature importances*.
-3. **L'Inférence Bayésienne Hiérarchique :** Les découvertes issues du Machine Learning sont ensuite injectées dans notre modèle final (ARX Hurdle Bayésien) pour modéliser l'hétéroscédasticité par dyade, informer les priors, disposer des bonnes variables économétriques, et obtenir des prédictions robustes (*Empricial Bayes*).
+3. **L'Inférence Bayésienne Hiérarchique :** Les découvertes issues du Machine Learning sont ensuite injectées dans notre modèle final (ARX Hurdle Bayésien) pour modéliser l'hétéroscédasticité par dyade, informer les priors (sans abuser de l'Empirical Bayes pour garder en robustesse de prédiction), disposer des bonnes variables économétriques, et améliorer les prédictions et les métriques d'erreur (MAE,MAPE).
 
 ## 🎯 La finalité : disposer de deux modèles robustes, aux ambitions différentes.
 
 L'objectif in fine est de doter les décideurs publics d'un outil de prévision complet, reposant sur deux modèles complémentaires :
 
 * **Le Pilier "Temps Long" (Modèle Welch & Raftery) :** Une réplication du modèle de référence OutFlow/Allocation. La méthodologie repose sur le calcul d'un taux de départ global par pays d'origine, dont le volume est ensuite réparti dans le monde via une distribution multinomiale. Ce modèle n'utilise aucune variable économétrique, seulement les masses de population. Il gère parfaitement la nature discrète des flux (nombres entiers) et s'avère extrêmement pertinent pour des projections de très longue durée (2050, 2100 et au-delà en théorie).  
-* **Le Pilier "Temps Court" (Notre Modèle sur-mesure ARX Hurdle) :** Un modèle bayésien de gravité bilatérale, hautement réactif à l'économétrie et préparé aux chocs macro-démographiques. Pensé pour la précision à court terme (<=5 ans), son objectif est de produire des prévisions extrêmement précises (visant une erreur MAE globale < 500 migrants, la précision de la littérature pour la prédiction à temps long étant de 1 200 migrants. Notre modèle en cours d'amélioration a déjà démontré une MAE de 980 migrants).  
+* **Le Pilier "Temps Court" (Notre Modèle sur-mesure ARX Hurdle) :** Un modèle bayésien de gravité bilatérale, hautement réactif à l'économétrie et préparé aux chocs macro-démographiques. Pensé pour la précision à court terme (<=5 ans), son objectif est de produire des prévisions extrêmement précises (**visant une erreur MAE globale < 500 migrants**, la précision de la littérature pour la prédiction à temps long étant de 1 200 migrants. Notre modèle en cours d'amélioration a déjà démontré une MAE de 980 migrants).  
 
 ## 📊 Données Utilisées
 
