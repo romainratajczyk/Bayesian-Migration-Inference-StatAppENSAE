@@ -1,7 +1,7 @@
 
 # Prédiction bayésienne des flux migratoires internationaux 
 
-Projet de recherche en groupe supervisé par Nicolas Chopin (CREST), réalisé à l'ENSAE. 
+Projet de recherche en groupe supervisé par Nicolas Chopin (CREST), réalisé à l'ENSAE.   
 *Membres du groupe: Louise, Romain, Ishagh, Varnel*.
 
 
