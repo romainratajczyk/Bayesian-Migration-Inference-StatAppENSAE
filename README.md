@@ -11,14 +11,14 @@ Ce projet développe une architecture de prédiction Out-of-Sample (OOS) des flu
 * **Problème :** L'état de l'art (modèle d'allocation *Welch & Raftery, 2022*, que nous avons répliqué) excelle sur le temps long macro-démographique mais reste mathématiquement aveugle aux chocs économétriques et géopolitiques de court terme (horizon $\le 5$ ans).
 * **Solution (Modèle ARX Hurdle ZTNB) :**
     * **Composante 1 (Hurdle) :** Décision si le couloir est ouvert (flux>0) ou fermé (flux prédit = 0) via une régression logistique  (décision dure selon un seuil déterminé par ROC, *Accuracy* $>96 % $). Cela évite de contaminer la suite de l'échantillonnage par une masse imporante de zéros (49% du dataset sont des flux nuls). 
-    * **Composante 2 (Volume) :** Processus AR(1) estimé par des covariables gravitaires. Utilisation d'une distribution **Zero-Truncated Negative Binomial (ZTNB)** pour absorber la dispersion quadratique $\text{Var}(Y) \approx \mu + \frac{\mu^2}{\phi}$. Une loi de Poisson serait inadapté car nos données de flux vérifient $V(Y) >> E[Y]$.
+    * **Composante 2 (Volume) :** Processus AR(1) estimé par des covariables gravitaires. Utilisation d'une distribution **Zero-Truncated Negative Binomial (ZTNB)** pour absorber la dispersion quadratique $\text{Var}(Y) \approx \mu + \frac{\mu^2}{\phi}$. Une loi de Poisson serait inadapté car nos données de flux vérifient $V(Y) >> E[Y]$. Le paramètre $\phi$ est estimé hiérarchiquement pour chaque région, ce qui respecte l'hétéroscédasticité géographique. 
     * **Régularisation :** Implémentation d'hyper-régressions économétriques ($Z\theta$) pour corriger le *shrinkage* excessif des paires de pays (i,j) avec peu de données vers des priors faiblement informatifs. 
 * **Résultat :** Au 5 avril, notre modèle **bat l'état de l'art sur la prévision OOS** (MAE globale $\approx 980$ vs $1200$, *Coverage* des intervalles de crédibilité à 95% maintenu à 97%). Nous disposons encore de pistes et d'une large marge d'amélioration, l'objectif étant de viser une MAE globale < 500 migrants. 
 
 <img width="500" alt="Capture d’écran 2026-04-10 à 11 40 43" src="https://github.com/user-attachments/assets/a76bd2b5-3dae-4b68-9cce-47bfb558bd5d" />
 
 
-Le modèle peine à modéliser les micro-flux 0-10. Notre idée est de remplacer des priors non-informatifs par des hyper-regressions gravitaires (les pays qui disposent de peu de données voyaient leurs paramètres subir un *shrinkage* vers une moyenne régionale, produisant des prédictions parfois aberrantes).   
+La précision sur les micro-flux ($y \in [1, 10]$) devrait largement s'améliorer en remplacant nos priors non-informatifs par des hyper-regressions gravitaires (les pays qui disposent de peu de données voyaient leurs paramètres subir un *shrinkage* vers une moyenne régionale, produisant des prédictions parfois aberrantes). **Amélioration en cours.** 
 
 <img width="700" alt="Capture d’écran 2026-04-10 à 11 33 51" src="https://github.com/user-attachments/assets/00b62948-4b3d-4a0e-b164-bfb072dd0ed4" />   
 
