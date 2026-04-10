@@ -6,10 +6,10 @@ Projet de recherche en groupe supervisé par Nicolas Chopin (CREST), réalisé �
 
 # TL;DR : 
 
-Ce projet développe une architecture de prédiction Out-of-Sample (OOS) des flux migratoires, dépassant les modèles gravitaires classiques par le développement de deux **modèles bayésiens hiérarchiques** échantillonné via Hamiltonian Monte Carlo (Stan).
+Ce projet développe une architecture de prédiction Out-of-Sample (OOS) des flux migratoires, dépassant les modèles gravitaires classiques par le développement de deux **modèles bayésiens hiérarchiques** échantillonnés via Hamiltonian Monte Carlo (Stan).
 
-* **Problème :** L'état de l'art (modèle d'allocation *Welch & Raftery, 2022*, que nous avons répliqué) excelle sur le temps long macro-démographique mais reste mathématiquement aveugle aux chocs économétriques et géopolitiques de court terme (horizon $\le 5$ ans).
-* **Solution (Modèle ARX Hurdle ZTNB) :**
+* **Problème :** L'état de l'art (modèle d'allocation multinomiale *Welch & Raftery, 2022*, que nous avons répliqué) excelle sur le temps long macro-démographique mais reste mathématiquement aveugle aux chocs économétriques et géopolitiques de court terme (horizon $\le 5$ ans).
+* **Solution (Notre Modèle sur-mesure ARX Hurdle ZTNB) :**
     * **Composante 1 (Hurdle) :** Décision si le couloir est ouvert (flux>0) ou fermé (flux prédit = 0) via une régression logistique  (décision dure selon un seuil déterminé par ROC, *Accuracy* $>96 % $). Cela évite de contaminer la suite de l'échantillonnage par une masse imporante de zéros (49% du dataset sont des flux nuls). 
     * **Composante 2 (Volume) :** Processus AR(1) estimé par des covariables gravitaires. Utilisation d'une distribution **Zero-Truncated Negative Binomial (ZTNB)** pour absorber la dispersion quadratique $\text{Var}(Y) \approx \mu + \frac{\mu^2}{\phi}$. Une loi de Poisson serait inadapté car nos données de flux vérifient $V(Y) >> E[Y]$. Le paramètre $\phi$ est estimé hiérarchiquement pour chaque région, ce qui respecte l'hétéroscédasticité géographique. 
     * **Régularisation :** Implémentation d'hyper-régressions économétriques ($Z\theta$) pour corriger le *shrinkage* excessif des paires de pays (i,j) avec peu de données vers des priors faiblement informatifs. 
