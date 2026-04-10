@@ -16,7 +16,7 @@ Ce projet développe une architecture de prédiction Out-of-Sample (OOS) des flu
 * **Résultat :** Au 5 avril, notre modèle **bat l'état de l'art sur la prévision OOS** (MAE globale $\approx 980$ vs $1200$, *Coverage* des intervalles de crédibilité à 95% maintenu à 97%). Nous disposons encore de pistes et d'une large marge d'amélioration, l'objectif étant de viser une MAE globale < 500 migrants. 
 <table style="width: 100%;">
   <tr>
-    <td style="width: 50%; text-align: center;">
+    <td style="width: 30%; text-align: center;">
       <img src="https://github.com/user-attachments/assets/a76bd2b5-3dae-4b68-9cce-47bfb558bd5d" alt="Predicted vs Observed" style="width: 100%;" />
       <br>
       <em><strong>Figure 1 :</strong> Flux prédits vs observés (OOS). La précision sur les micro-flux ($y \in [1, 10]$) devrait largement s'améliorer en remplacant nos priors non-informatifs par des hyper-regressions gravitaires (les pays qui disposent de peu de données voyaient leurs paramètres subir un *shrinkage* vers une moyenne régionale, produisant des prédictions parfois aberrantes). **Amélioration en cours.** </em>
