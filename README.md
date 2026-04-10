@@ -19,9 +19,9 @@ Ce projet développe une architecture de prédiction Out-of-Sample (OOS) des flu
     <td style="width: 30%; text-align: center;">
       <img src="https://github.com/user-attachments/assets/a76bd2b5-3dae-4b68-9cce-47bfb558bd5d" alt="Predicted vs Observed" style="width: 100%;" />
       <br>
-      <em><strong>Figure 1 :</strong> Flux prédits vs observés (OOS). La précision sur les micro-flux ($y \in [1, 10]$) devrait largement s'améliorer en remplacant nos priors non-informatifs par des hyper-regressions gravitaires (les pays qui disposent de peu de données voyaient leurs paramètres subir un *shrinkage* vers une moyenne régionale, produisant des prédictions parfois aberrantes). **Amélioration en cours.** </em>
+      <em><strong>Figure 1 :</strong> Flux prédits vs observés (OOS). La précision sur les micro-flux ($y \in [1, 10]$) devrait largement s'améliorer en remplacant nos priors non-informatifs par des hyper-regressions gravitaires. (les pays qui disposent de peu de données voyaient leurs paramètres subir un *shrinkage* vers une moyenne régionale, produisant des prédictions parfois aberrantes). **Amélioration en cours.** </em>
     </td>
-    <td style="width: 50%; text-align: center;">
+    <td style="width: 70%; text-align: center;">
       <img src="https://github.com/user-attachments/assets/00b62948-4b3d-4a0e-b164-bfb072dd0ed4" alt="Phi Dispersion Violins" style="width: 100%;" />
       <br>
       <em><strong>Figure 2 :</strong> Paramètre de dispersion $\phi$ (ZTNB) par région M49 de l'ONU. Visualisation de l'hétéroscédasticité géographique.</em>
