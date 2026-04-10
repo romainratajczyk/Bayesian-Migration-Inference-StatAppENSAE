@@ -8,6 +8,18 @@ Projet de recherche en groupe supervisé par Nicolas Chopin (CREST), réalisé �
 
 **TL;DR:** Ce projet vise à prédire l'évolution des flux migratoires internationaux. Nous avons déployé une méthodologie progressive, adaptée à la complexité du problème : d'un modèle de gravité simple et linéaire vers des algorithmes de Machine Learning, pour aboutir à un modèle bayésien hiérarchique sur-mesure qui représente la majeure partie de notre travail (**échantillonage par Stan/Hamiltonian Monte Carlo**). L'enjeu est de capturer l'inertie temporelle, l'hétéroscédasticité géographique, et les chocs macro-démographiques et géopolitiques, pour disposer d'une excellente qualité prédictive à court terme. La littérature (*Probabilistic forecasts of international bilateral migration flows*, Welch & Raftery, 2022) repose sur le calcul d'un taux de départ global par pays d'origine, dont le volume est ensuite réparti dans le monde via une distribution multinomiale. Ce modèle n'utilise aucune variable économétrique, seulement les masses de population. Cela lui permet des projections de très longue durée (2050, 2100 et au-delà en théorie) mais le modèle est totalement aveugle aux chocs socio-économiques et géopolitiques de court terme. C'est précisement ce champ que notre modèle a l'ambition de combler, pour doter les décideurs d'un moyen de prédiction très sensible. Au 5 avril, notre modèle a déjà battu les métrique MAE Out-of-Sample & le Coverage (IC) de la littérature, et nous envisageons encore d'autre pistes très encourageantes pour améliorer notre modèle (voir ci dessous, Annexe technique). 
 
+
+# TL;DR : 
+
+Ce projet développe une architecture de prédiction Out-of-Sample (OOS) des flux migratoires, dépassant les modèles gravitaires classiques par le développement de deux **modèles bayésiens hiérarchiques** échantillonné via Hamiltonian Monte Carlo (Stan).
+
+* **Problème :** L'état de l'art (modèle d'allocation *Welch & Raftery, 2022*, que nous avons répliqué) excelle sur le temps long macro-démographique mais reste mathématiquement aveugle aux chocs économétriques et géopolitiques de court terme (horizon $\le 5$ ans).
+* **Solution (Modèle ARX Hurdle ZTNB) :**
+    * **Composante 1 (Hurdle) :** Décision si le couloir est ouvert (flux>0) ou fermé (flux prédit = 0) via une régression logistique  (décision dure selon un seuil déterminé par ROC, *Accuracy* $>96\%$). Cela évite de contaminer la suite de l'échantillonnage par une masse imporante de zéros (49% du dataset sont des flux nuls). 
+    * **Composante 2 (Volume) :** Processus AR(1) estimé par des covariables gravitaires. Utilisation d'une distribution **Zero-Truncated Negative Binomial (ZTNB)** pour absorber la surdispersion quadratique $\text{Var}(Y) \approx \mu + \frac{\mu^2}{\phi}$. Une loi de Poisson serait inadapté car nos données de flux vérifient $V(Y) >> E[Y]$.
+    * **Régularisation :** Implémentation d'hyper-régressions économétriques ($Z\theta$) pour corriger le *shrinkage* excessif des paires de pays (i,j) avec peu de données vers des priors faiblement informatifs. 
+* **Résultat :** Au 5 avril, notre modèle **bat l'état de l'art sur la prévision OOS** (MAE globale $\approx 980$ vs $1200$, *Coverage* des intervalles de crédibilité à 95% maintenu à 97%). Nous disposons encore de pistes et d'une large marge d'amélioration, l'objectif étant de viser une MAE globale < 500 migrants. 
+
 <img width="500" alt="Capture d’écran 2026-04-10 à 11 40 43" src="https://github.com/user-attachments/assets/a76bd2b5-3dae-4b68-9cce-47bfb558bd5d" />
 
 
