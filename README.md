@@ -1,8 +1,41 @@
 
 # Prédiction bayésienne des flux migratoires internationaux 
-[Dépôt GitHub - Projet Migration](https://github.com/IshaghCheikh/ProjetStat/tree/main)
 
-Ce projet vise à comprendre la dynamique des flux migratoires internationaux et d'en prédire l'évolution. Face à la complexité de la réalité macroéconomique et statistique des flux, nous déployons une méthodologie progressive : d'un modèle de gravité standard vers des algorithmes de Machine Learning, pour aboutir à une modélisation bayésienne hiérarchique de pointe. L'enjeu est de capturer l'inertie temporelle, l'hétéroscédasticité, et les chocs macro-démographiques et géopolitiques. 
+Projet de recherche en groupe supervisé par Nicolas Chopin (CREST), réalisé à l'ENSAE.   
+*Membres du groupe: Louise, Romain, Ishagh, Varnel*.
+
+# TL;DR : 
+
+Ce projet développe une architecture de prédiction Out-of-Sample (OOS) des flux migratoires, dépassant les modèles gravitaires classiques par le développement de deux **modèles bayésiens hiérarchiques** échantillonnés via Hamiltonian Monte Carlo (Stan).
+
+* **Problème :** L'état de l'art (modèle d'allocation multinomiale *Welch & Raftery, 2022*, que nous avons répliqué) excelle sur le temps long macro-démographique mais reste mathématiquement aveugle aux chocs économétriques et géopolitiques de court terme (horizon $\le 5$ ans).
+* **Solution (Notre Modèle sur-mesure ARX Hurdle ZTNB) :**
+    * **Composante 1 (Hurdle) :** Décision si le couloir est ouvert (flux>0) ou fermé (flux prédit = 0) via une régression logistique  (décision dure selon un seuil déterminé par ROC, *Accuracy* $>96$% ). Cela évite de contaminer la suite de l'échantillonnage par une masse imporante de zéros (49% du dataset sont des flux nuls). 
+    * **Composante 2 (Volume) :** Processus AR(1) estimé par des covariables gravitaires. Utilisation d'une distribution **Zero-Truncated Negative Binomial (ZTNB)** pour absorber la dispersion quadratique $\text{Var}(Y) \approx \mu + \frac{\mu^2}{\phi}$. Une loi de Poisson serait inadapté car nos données de flux vérifient $\text{Var}(Y) \gg E[Y]$. Le paramètre $\phi$ est estimé hiérarchiquement pour chaque région, ce qui respecte l'hétéroscédasticité géographique. 
+    * **Régularisation :** Implémentation d'hyper-régressions économétriques ($Z\theta$) pour corriger le *shrinkage* excessif des paires de pays $(i,j)$ avec peu de données vers des priors faiblement informatifs. 
+* **Résultat :** Au 5 avril, notre modèle **bat l'état de l'art sur la prévision OOS** (MAE globale $\approx 990$ vs $1200$, *Coverage* des intervalles de crédibilité à 95% maintenu à 97%). Nous disposons encore de pistes et d'une large marge d'amélioration, l'objectif étant de viser une MAE globale < 500 migrants. 
+<table style="width: 100%; border-collapse: collapse;">
+  <tr>
+    <td style="width: 50%; vertical-align: top; text-align: center; border: none;">
+      <img src="https://github.com/user-attachments/assets/a76bd2b5-3dae-4b68-9cce-47bfb558bd5d" alt="Predicted vs Observed" style="width: 100%; display: block; margin-bottom: 10px;" />
+      <em><strong>Figure 1 :</strong> Flux prédits vs observés (OOS). La précision sur les micro-flux (y dans [1, 10]) devrait largement s'améliorer en remplacant nos priors non-informatifs par des hyper-regressions gravitaires. (les pays qui disposent de peu de données voyaient leurs paramètres subir un shrinkage vers une moyenne régionale, produisant des prédictions parfois aberrantes). AMELIORATION EN COURS. </em>
+    </td>
+    <td style="width: 50%; vertical-align: top; text-align: center; border: none;">
+      <img src="https://github.com/user-attachments/assets/00b62948-4b3d-4a0e-b164-bfb072dd0ed4" alt="Phi Dispersion Violins" style="width: 100%; display: block; margin-bottom: 10px;" />
+      <em><strong>Figure 2 :</strong> Graphe en violon, paramètre de dispersion phi (ZTNB) par région M49 de l'ONU. Visualisation de l'hétéroscédasticité géographique.</em>
+    </td>
+  </tr>
+</table>
+
+
+
+
+          
+
+
+# Développement & Annexe Technique 
+
+### Ecriture en cours. Un rapport final ainsi qu'une synthèse générale seront disponibles début Mai. 
 
 ## 🔬 Notre démarche scientifique 
 
@@ -62,6 +95,7 @@ $$\text{logit}(P(\text{flow} > 0)) = \alpha_{d} + X_{h} \beta_{h} + \beta_{\text
 Où $X_{h}$ inclut les variables les plus importantes et pertinentes pour le Hurdle (notamment les features les plus importantes indiquées par un Random Forest entraîné) : frontière commune, $\log(\text{distance})$, PIB/tête à la date $t-1$, populations... Sans pour autant répliquer complètement le modèle de gravité (le but est l'*existence ou non* d'une route, pas son *volume*). Si le modèle prédit une fermeture, le flux prédit est 0 net. S'il prédit une ouverture, on passe à la composante Volume.
 
 #### B. Composante Volume (Processus ARX Log-Normal)
+### Précision: la distribution log-normale a été remplacée par une Negative Binomiale tronquée en zéro (ZTNB). 
 AR "X" pour "eXogenous variables", les variables économétriques du modèle de gravité pour $$\mu$$.   
 Pour les dyades actives, le volume est modélisé par un processus auto-régressif conditionnel à la dyade :
 
@@ -141,5 +175,5 @@ Projet réalisé dans le cadre du cours de Statistique Appliquée (ENSAE) par :
 Louise, Romain, Ishagh, Varnel
 
 
-*Dernière mise à jour : 28 Mars 2026*
+*Dernière mise à jour : 10 Avril 2026*
 
