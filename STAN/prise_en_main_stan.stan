@@ -23,7 +23,7 @@ parameters {
   real<lower=0> tau_alpha;     // Dispersion des intercepts entre dyades
   real beta_lag_global;        // Effet global du lag binaire sur P(flow > 0)
 
-  // Effets aléatoires non-centrés (Matt Trick)
+  // Effets aléatoires non-centrés 
   vector[D_h] alpha_raw;       // alpha_d = alpha_global + tau_alpha * alpha_raw
 
   // PARTIE 2 : VOLUME : Hyperparamètres globaux
