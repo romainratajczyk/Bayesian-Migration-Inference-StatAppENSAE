@@ -2,30 +2,29 @@
 # Prédiction bayésienne des flux migratoires internationaux 
 [Dépôt GitHub - Projet Migration](https://github.com/IshaghCheikh/ProjetStat/tree/main)
 
-Ce projet a pour objectif de comprendre la dynamique des flux migratoires internationaux bilatéraux et d'en prédire l'évolution. Face à la complexité de la réalité macroéconomique et statistique des flux, nous déployons une méthodologie progressive : d'un modèle de gravité standard vers des algorithmes de Machine Learning, pour aboutir à une modélisation bayésienne hiérarchique de pointe.
+Ce projet vise à comprendre la dynamique des flux migratoires internationaux et d'en prédire l'évolution. Face à la complexité de la réalité macroéconomique et statistique des flux, nous déployons une méthodologie progressive : d'un modèle de gravité standard vers des algorithmes de Machine Learning, pour aboutir à une modélisation bayésienne hiérarchique de pointe. L'enjeu est de capturer l'inertie temporelle, l'hétéroscédasticité, et les chocs macro-démographiques et géopolitiques. 
 
 ## 🔬 Notre démarche scientifique 
 
-Notre stratégie de modélisation s'articule autour de trois grandes étapes :
 
-1. **Le Benchmark Gravitaire :** Implémentation d'un modèle de gravité log-linéaire classique (OLS) pour capturer les déterminants standards (distance, PIB, liens coloniaux). Cette étape sert de point de référence.
-2. **L'Exploration Non-Linéaire (Machine Learning) :** Utilisation de modèles ensemblistes (Random Forest, XGBoost) pour challenger la linéarité du modèle de gravité. Cette étape s'est révélée cruciale pour :
-   * Détecter les effets de seuil et les interactions complexes entre variables.
-   * Analyser les cartes de résidus (comprendre géographiquement où le modèle se trompe).
+1. **Benchmark Modèle de Gravité :** Modèle de gravité log-linéaire (OLS) pour capturer les déterminants standards (distance, PIB, liens coloniaux). Biais de spécification majeur (la réalité n'est pas du tout linéaire, ce que les prochains modèles vont démontrer); ce modèle n'est pas optimal.
+2. **Exploration Non-Linéaire (ML) :** Méthodes ensemblistes (Random Forest, XGBoost) pour challenger la linéarité du modèle de gravité. 
+   * Détection d'effets de seuil et d'interactions complexes entre variables. (e.g., seuil sur le PIB, interaction distance*frontière_commune)
+   * Analyse des cartes de résidus (comprendre géographiquement où le modèle se trompe).
    * Extraire les *feature importances*.
-3. **L'Inférence Bayésienne Hiérarchique :** Les découvertes issues du Machine Learning sont ensuite injectées dans notre modèle final (ARX Hurdle Bayésien) pour modéliser l'hétéroscédasticité par dyade, informer les priors (sans abuser de l'Empirical Bayes pour conserver de la robustesse de prédiction), disposer des bonnes variables économétriques, et améliorer les prédictions et les métriques d'erreur (MAE,MAPE).
+3. **Inférence Bayésienne Hiérarchique (Stan/HMC) :** L'analyse des cartes de résidus des modèles ML suggèrent une forte hétéroscédasticité géographique, ce que notre modèle hiérarchique sait très bien gérer. Les effets de seuil découverts par le ML injectés dans une équation de gravité dictant la valeur de la moyenne d'un AR(1) propre à chaque paire de pays (i,j). Le but est d'améliorer les prédictions Out-of-Sample et les métriques d'erreur (MAE,MAPE).
 
-## 🎯 La finalité : disposer de deux modèles robustes, aux ambitions différentes.
+## 🎯 Deux approches pour deux horizons
 
 L'objectif in fine est de doter les décideurs publics d'un outil de prévision complet, reposant sur deux modèles complémentaires :
 
-* **Le Pilier "Temps Long" (Modèle Welch & Raftery) :** Une réplication du modèle de référence OutFlow/Allocation. La méthodologie repose sur le calcul d'un taux de départ global par pays d'origine, dont le volume est ensuite réparti dans le monde via une distribution multinomiale. Ce modèle n'utilise aucune variable économétrique, seulement les masses de population. Il gère parfaitement la nature discrète des flux (nombres entiers) et s'avère extrêmement pertinent pour des projections de très longue durée (2050, 2100 et au-delà en théorie).  
-* **Le Pilier "Temps Court" (Notre Modèle sur-mesure ARX Hurdle) :** Un modèle bayésien de gravité bilatérale, hautement réactif à l'économétrie et préparé aux chocs macro-démographiques. Pensé pour la précision à court terme (<=5 ans), son objectif est de produire des prévisions extrêmement précises (**visant une erreur MAE globale < 500 migrants**, la précision de la littérature pour la prédiction à temps long étant de 1 200 migrants. Notre modèle en cours d'amélioration a déjà démontré une MAE de 980 migrants).  
+* **Baseline Long Terme (Modèle de Welch & Raftery, voir /articles) :**  Réplication du modèle de référence OutFlow/Allocation. La méthodologie repose sur le calcul d'un taux de départ global par pays d'origine, dont le volume est ensuite réparti dans le monde via une distribution multinomiale. Ce modèle n'utilise aucune variable économétrique, seulement les masses de population. Cela lui permet des projections de très longue durée (2050, 2100 et au-delà en théorie).  
+* ** Notre Modèle sur-mesure ARX Hurdle, prévisions court terme  :** Modèle bayésien à plusieurs composantes hiérarchiques, hautement réactif à l'économétrie et préparé aux chocs macro-démographiques et géopolitiques. Pensé pour la précision à court terme (<=5 ans), son objectif est de produire des prévisions extrêmement précises, surpassant l'état de l'art actuel pour les prévisions de long terme (Welch & Raftery). Il a déjà démontré une erreur MAE (norme L1) meilleure que celle de Welch & Raftery (980<1200) et est en cours d'amélioration, nos pistes sont très encourageantes. (voir Annexe Technique)
 
 ## 📊 Données Utilisées
 
-* **Flux Migratoires :** Estimations pseudo-bayésiennes (Azose & Raftery, 2019) basées sur les stocks mondiaux et l'équilibre démographique.  
-* **Covariables Macroéconomiques :** Base de données Gravity (CEPII) enrichie. Intégration de variables géographiques (distance, frontières) et socio-économiques (Population, PIB et ses retards, Mortalité Infantile, Labour Force). 
+* **Flux Migratoires :** Estimations bayésiennes (JAGS) (Azose & Raftery, 2019) basées sur les stocks mondiaux et l'équilibre démographique.  
+* **Covariables Macroéconomiques :** Base de données Gravity (CEPII) enrichie. Intégration de variables géographiques (distance, frontières), socio-économiques (Population, PIB et ses retards, Mortalité Infantile, Labour Force), géopolitiques. 
 
 ## 🚀 État d'Avancement et Découvertes Récentes
 
