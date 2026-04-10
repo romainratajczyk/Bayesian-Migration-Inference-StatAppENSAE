@@ -22,7 +22,7 @@ Ce projet développe une architecture de prédiction Out-of-Sample (OOS) des flu
     </td>
     <td style="width: 50%; vertical-align: top; text-align: center; border: none;">
       <img src="https://github.com/user-attachments/assets/00b62948-4b3d-4a0e-b164-bfb072dd0ed4" alt="Phi Dispersion Violins" style="width: 100%; display: block; margin-bottom: 10px;" />
-      <em><strong>Figure 2 :</strong> Paramètre de dispersion $\phi$ (ZTNB) par région M49 de l'ONU. Visualisation de l'hétéroscédasticité géographique.</em>
+      <em><strong>Figure 2 :</strong> Paramètre de dispersion phi (ZTNB) par région M49 de l'ONU. Visualisation de l'hétéroscédasticité géographique.</em>
     </td>
   </tr>
 </table>
