@@ -9,10 +9,12 @@ Projet de recherche en groupe supervisé par Nicolas Chopin (CREST), réalisé �
 **TL;DR:** Ce projet vise à prédire l'évolution des flux migratoires internationaux. Nous avons déployé une méthodologie progressive, adaptée à la complexité du problème : d'un modèle de gravité simple et linéaire vers des algorithmes de Machine Learning, pour aboutir à un modèle bayésien hiérarchique sur-mesure qui représente la majeure partie de notre travail (**échantillonage par Stan/Hamiltonian Monte Carlo**). L'enjeu est de capturer l'inertie temporelle, l'hétéroscédasticité géographique, et les chocs macro-démographiques et géopolitiques, pour disposer d'une excellente qualité prédictive à court terme. La littérature (*Probabilistic forecasts of international bilateral migration flows*, Welch & Raftery, 2022) repose sur le calcul d'un taux de départ global par pays d'origine, dont le volume est ensuite réparti dans le monde via une distribution multinomiale. Ce modèle n'utilise aucune variable économétrique, seulement les masses de population. Cela lui permet des projections de très longue durée (2050, 2100 et au-delà en théorie) mais le modèle est totalement aveugle aux chocs socio-économiques et géopolitiques de court terme. C'est précisement ce champ que notre modèle a l'ambition de combler, pour doter les décideurs d'un moyen de prédiction très sensible. Au 5 avril, notre modèle a déjà battu les métrique MAE Out-of-Sample & le Coverage (IC) de la littérature, et nous envisageons encore d'autre pistes très encourageantes pour améliorer notre modèle (voir ci dessous, Annexe technique). 
 
 
-<img width="450" alt="Capture d’écran 2026-04-10 à 11 33 07" src="https://github.com/user-attachments/assets/f0f384f0-e3a1-4151-9bed-c35052e591ae" />   
+<img width="450" alt="Capture d’écran 2026-04-10 à 11 33 07" src="https://github.com/user-attachments/assets/f0f384f0-e3a1-4151-9bed-c35052e591ae" />  
+
 Le modèle peine à modéliser les micro-flux 0-10. Notre idée est de remplacer des priors non-informatifs par des hyper-regressions gravitaires (les pays qui disposent de peu de données voyaient leurs paramètres subir un *shrinkage* vers une moyenne régionale, produisant des prédictions parfois aberrantes).   
 
 <img width="700" alt="Capture d’écran 2026-04-10 à 11 33 51" src="https://github.com/user-attachments/assets/00b62948-4b3d-4a0e-b164-bfb072dd0ed4" />   
+
 Graphes en violon du paramètre de dispersion d'une distribution ZTNB (Zero-Truncated-Negative-Binomial) par région M49 de l'ONU. 
 
 
