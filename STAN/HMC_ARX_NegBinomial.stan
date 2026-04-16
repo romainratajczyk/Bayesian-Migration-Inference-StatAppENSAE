@@ -196,6 +196,8 @@ model {
   beta_h[4]      ~ normal(0, 2); // 4. Interaction frontière_commune*distance
   beta_h[5]      ~ normal(0, 2); // 5. Colonie
   beta_h[6]      ~ normal(0, 2); // 6. Langue officielle
+  beta_h[7] ~ normal(1.0, 1.0); // Prior positif forcé pour 'logit_rf'. Le ML est présumé prédictif
+  beta_h[8] ~ normal(1.0, 1.0); // Prior strictement positif forcé pour log_TC_lag
   // Variables 7 à 9 supprimées de beta_h car transférées dans Z_em / Z_at
   
   mu_beta_lag    ~ normal(2.0, 2.5); // definition du prior à discuter
