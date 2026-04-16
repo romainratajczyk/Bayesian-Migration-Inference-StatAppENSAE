@@ -175,7 +175,7 @@
 # Coût CPU: negligeable. Coût RAM/Disque colossal.
 # Mettre la generation de log_lik de Stan avec interrupteur ==1 à mettre à 0 pour la production de figures et prédictions, et 1 pour la comparaison de modèles (lourds à simuler)
 
-# In[1]:
+# In[15]:
 
 
 # Installation des bibliothèques non classiqus
@@ -199,7 +199,7 @@ cmdstanpy.install_cmdstan()
 # 
 # 
 
-# In[2]:
+# In[16]:
 
 
 import warnings
@@ -218,7 +218,7 @@ warnings.filterwarnings('ignore')
 np.random.seed(42)
 
 
-# In[3]:
+# In[17]:
 
 
 # Chargement & filtrage pays
@@ -265,7 +265,7 @@ print(f"Extraction et simulation sur : {N_pays} pays.")
 
 
 
-# In[4]:
+# In[18]:
 
 
 # Clustering géographique (EXOGENE au modèle et PUBLI: ISO-3166 alpha-3. Inattaquable)
@@ -291,7 +291,7 @@ K_clusters = 6
 
 
 
-# In[5]:
+# In[19]:
 
 
 # Clustering géographique: Sous-régions ONU (norme M49)
@@ -393,13 +393,13 @@ HURDLE_VARS = [
     'LB_ij',          # 2. Frontière commune
     'logD_times_LB',  # 3. Interaction
     'COL_ij',         # 4. Colonie
-    'OL_ij',          # 5. Langue officielle
-    'log_P_it',       # 6. Population Origine
-    'log_P_jt',       # 7. Population Destination
-    'log_gdpcap_d_lag'# 8. PIB Destination
-]
+    'OL_ij']#,          # 5. Langue officielle
+    #'log_P_it',       # 6. Population Origine
+    #'log_P_jt',       # 7. Population Destination
+    #'log_gdpcap_d_lag'# 8. PIB Destination
+#]
 
-ML_VARS          = ['log_gdpcap_o_lag', 'is_rich_o']
+ML_VARS          = ['log_gdpcap_o_lag', 'is_rich_o'] # ne sert à rien pour l'instant, possible colinéarité, mais seuil réel détecté par random forest. A explorer plus tard. 
 # pour que la boucle for génère les log_P_it pour le Hurdle
 GRAVITY_VARS_RAW = ['P_it', 'P_jt', 'PSR_i', 'PSR_j', 'IMR_it', 'IMR_jt',
                     'urban_it', 'urban_jt', 'LA_i', 'LA_j']
@@ -422,7 +422,7 @@ df       = df_train
 
 
 
-# In[7]:
+# In[21]:
 
 
 # Séparation hurdle / volume
@@ -439,7 +439,7 @@ df_volume = df[df['flow'] > 0].dropna(subset=VOLUME_REQUIRED).copy().reset_index
 N_h, N_v = len(df_hurdle), len(df_volume)
 
 
-# In[8]:
+# In[22]:
 
 
 # Nettoyage exclusif de la covariable inertielle brute (sans centrage)
@@ -450,7 +450,7 @@ df_test['log_flow_lag_clean'] = (
 )
 
 
-# In[9]:
+# In[23]:
 
 
 # Encodage dyades et standardisation
@@ -496,7 +496,7 @@ X_h_std,   stats_h   = standardize_matrix(df_hurdle[HURDLE_VARS].values, HURDLE_
 
 
 
-# In[ ]:
+# In[24]:
 
 
 # Préparation du jeu de test OOS
@@ -532,7 +532,7 @@ X_test_h_std, _ = standardize_matrix(df_test[HURDLE_VARS].values, HURDLE_VARS,
                                      BINARY_COLS_HUR, fit_stats=stats_h)
 
 
-# In[11]:
+# In[25]:
 
 
 # Nettoyage impératif des infinis (flux nuls passés en log)
@@ -543,7 +543,7 @@ df_volume = df_volume.replace([np.inf, -np.inf], np.nan).dropna(subset=VOLUME_RE
 print(f"Infinis dans Volume : {np.isinf(df_volume[X_VOL_COLS].values).sum()}")
 
 
-# In[12]:
+# In[26]:
 
 
 # réseau initial (avant perte temporelle ou vectorielle)
@@ -586,7 +586,7 @@ else:
     print("Aucun NaN détecté dans les colonnes ici.")
 
 
-# In[ ]:
+# In[27]:
 
 
 tous_les_pays = sorted(list(set(df['orig'].unique()).union(set(df['dest'].unique()))))
@@ -599,15 +599,11 @@ df_test['orig_id_test_v'] = df_test['orig'].map(pays_to_id)
 df_test['dest_id_test_v'] = df_test['dest'].map(pays_to_id)
 
 
-df_hurdle['orig_id_h'] = df_hurdle['orig'].map(pays_to_id)
-df_hurdle['dest_id_h'] = df_hurdle['dest'].map(pays_to_id)
-
-
-# In[14]:
+# In[ ]:
 
 
 # paramètres structurels macroéconomiques par pays 
-K_Z = 3 # Nombre de variables d'hyper-régression (log Pop, log GDP, log IMR)
+K_Z = 2 # Nombre de variables d'hyper-régression (log Pop, log GDP, on utilise plus log IMR)
 Z_mat = np.zeros((N_pays_total, K_Z))
 
 for pays, pays_id in pays_to_id.items():
@@ -618,17 +614,17 @@ for pays, pays_id in pays_to_id.items():
     if not subset_orig.empty:
         pop = subset_orig['log_P_it'].mean()
         gdp = subset_orig['log_gdpcap_o_lag'].mean()
-        imr = subset_orig['log_IMR_it'].mean()
+        #imr = subset_orig['log_IMR_it'].mean()
     else:
         # Fallback côté destination si le pays n'a jamais été émetteur en train
         subset_dest = df_train[df_train['dest'] == pays]
         pop = subset_dest['log_P_jt'].mean()
         gdp = subset_dest['log_gdpcap_d_lag'].mean()
-        imr = subset_dest['log_IMR_jt'].mean()
+        #imr = subset_dest['log_IMR_jt'].mean()
 
     Z_mat[idx, 0] = pop
     Z_mat[idx, 1] = gdp
-    Z_mat[idx, 2] = imr
+    #Z_mat[idx, 2] = imr # colinéarité GDP IMR ? 
 
 # Imputation des éventuels NaN par la moyenne globale et Standardisation
 for j in range(K_Z):
@@ -641,6 +637,25 @@ for j in range(K_Z):
 Z_em = Z_mat
 Z_at = Z_mat
 
+
+
+# Total Faux Négatifs (Couloirs manqués) : 1295
+# Total Faux Positifs (Couloirs inventés) : 1279
+# 
+# rajouter Z_em_h hyper-regressions hurdle idem Z_at_h. Car dans HURDLE_VARS figure encore des variables monoadiques? 
+# Les hyper-regressions sont les mêmes pour hurdle/volume? 
+# encore des prédictions aberrantes (>2Millions pour un flux réel de zéro!) 
+# 
+# corrélation positive entre erreur et amplitude: normal ? oui. NegBin: incertitude croit linéairement avec la moyenne. 
+# 
+# graphe en violon: distribution posteriors pas assez étroites (normal, on a que T=5 périodes d'entrainement), néanmoins les pays stable ont bien une dispersion inverse (phi) haute
+# Relire description de l'article des auteurs: ils parlent de prise en compte de changement de population non du aux migrations; ils considèrent age et sexe. (?) 
+# 
+# 
+# Pondérer le seuil de décision, anciennement ROC (argument MAPE comme métrique, arguments macroéconomiques).
+# 
+# 
+# 
 
 # In[ ]:
 
@@ -666,8 +681,6 @@ stan_data = {
 
     'orig_id_v': df_volume['orig_id_v'].astype(int).tolist(),
     'dest_id_v': df_volume['dest_id_v'].astype(int).tolist(),
-    'orig_id_h': df_hurdle['orig_id_h'].astype(int).tolist(), 
-    'dest_id_h': df_hurdle['dest_id_h'].astype(int).tolist(),
 
     'flow': df_volume['flow'].astype(int).tolist(),
     'log_flow_lag': df_volume['log_flow_lag'].astype(float).tolist(),
@@ -675,7 +688,7 @@ stan_data = {
     'cluster_v': cluster_v.tolist(),
 
     'K_clusters': int(K_clusters),
-    'do_ppc': 0,
+    'do_ppc': 0, # a revoir 
     'do_loo': 0,  # =1 : on active la génération des log-likelihoods pour comparer les critères Stan des modèles
 
     'N_test': int(len(df_test)),
@@ -699,8 +712,8 @@ stan_data = {
 # Sampling Stan parameters
 
 N_CHAINS = 4
-PARALLEL_CHAINS = 2
-ITER_SAMPLING = 900
+PARALLEL_CHAINS = 4
+ITER_SAMPLING = 800
 THIN = 2
 
 N_DRAWS = ITER_SAMPLING // THIN
@@ -792,14 +805,14 @@ print(f"Outputs sécurisés sous : {custom_prefix}_chain*.csv")
 # 
 # Multicolinéarité parfaite: il faut strictement supprimer les variables monoadiques de X_v dans l'équation mu_ij=alpha_i + gamma_j + X_v*beta_grav. 
 
-# In[ ]:
+# In[31]:
 
 
 # si perte de connexion à la cellule précédente: 
 # Ctrl + K + C/U pour commenter/décommenter
-# csv_files=csv_files = [
-#     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain1.csv",
-#     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain2.csv",
+csv_files=csv_files = [
+    "/Users/romain/Desktop/onyxia/HMC_ARX_NegBinomial-20260415204404_1.csv",
+    "/Users/romain/Desktop/onyxia/HMC_ARX_NegBinomial-20260415204404_2.csv"]#,
 #     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain3.csv",
 #     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain4.csv"
 # ]
@@ -920,7 +933,7 @@ print(f"Shape de mu_test : {mu_test.shape}")
 # 
 # Esperance de ZNTB: doit être définie sur R+, d'ou la prise de l'exponentielle puis inversion. Problème d'exponentiation sur les FP. 
 
-# In[19]:
+# In[ ]:
 
 
 #  Purge des tirages asymétriques (NaN générés par pd.concat)
@@ -964,12 +977,22 @@ if zeros_mask.any():
 flow_cond_med_final = np.median(flow_cond_sim, axis=0)
 prob_med = np.median(prob_clean, axis=0)  
 
-# Receiver Operating Characteristic (ROC) sur le Hurdle
+# anciennement: pure Receiver Operating Characteristic (ROC) sur le Hurdle. Mais objectif MAPE, donc à pondérer. 
+
 y_true = df_test['flow'].values
 y_true_bin = (y_true > 0).astype(int)
 
+# Pondération de la fonction de perte (Asymétrie MAPE)
+# W_FP > 1 force l'algorithme à exiger une probabilité beaucoup plus élevée avant d'ouvrir un couloir.
+W_FP = 10.0
+
+
+
 fpr, tpr, thresholds = roc_curve(y_true_bin, prob_med)
-optimal_idx = np.argmax(tpr - fpr)
+
+# Maximisation du gain sous pénalité asymétrique
+asymmetric_score = tpr - (W_FP * fpr)
+optimal_idx = np.argmax(asymmetric_score)
 optimal_threshold = thresholds[optimal_idx]
 
 print(f"Seuil ROC optimal trouvé pour ({N_pays} pays) : {optimal_threshold:.3f}")
@@ -989,6 +1012,8 @@ print(f"Prédictions OOS reconstruites ({N_pays} pays) : {y_pred.shape[0]} obser
 print(f"  Médiane prédite ({N_pays} pays) : {np.median(y_pred):,.0f} migrants")
 print(f"  Max prédit      ({N_pays} pays) : {y_pred.max():,.0f} migrants")
 
+
+# # A FAIRE : code qui minimise la MAPE avec le seuil ROC. 
 
 # ## Médiane attendue: proche de 1 (car 49% de zéros dans la base complète de 190 pays)
 # ## Max attendu: à vérifier
@@ -1016,7 +1041,7 @@ print(f"  Max prédit      ({N_pays} pays) : {y_pred.max():,.0f} migrants")
 # 
 # D'où la prédiction max de 25 M ! 
 
-# In[ ]:
+# In[50]:
 
 
 # Métriques OOS
@@ -1121,8 +1146,10 @@ print("-" * 75)
 # 
 # ### Nouveau: le Hurdle a été enrichi, mais les derniers % à attraper sont des cygnes noirs, qu'on aura probablement jamais. 
 
-# In[ ]:
+# In[51]:
 
+
+import plotly.express as px
 
 #  Isolement des erreurs conditionnelles
 df_test['y_true_bin'] = y_true_bin
@@ -1185,7 +1212,7 @@ fig_fp.show()
 # Stan observe les 190 pays. Il voit que globalement, les pays avec une forte population ont une forte attraction observée dans Y. Le HMC ajuste donc le gradient de $\theta_{population}$ vers une valeur positive. 
 # Le prior d'un micro-état k (sans données de flux) se translate : son $\mu_k$ devient fortement négatif car $\theta_{population}$ est positif mais $\log(P_k)$ est très faible. Shrinkage de ce micro-état / ou pays instablevers un nouveau plancher propre, et non plus vers la moyenne mondiale. L'algo apprend les lois macroéconomiques sur les pays denses pour punir/contraindre l'ignorance sur les pays vides/insables, et ne plus reproduire les erreurs du précédent modèle (décrites ci dessus dans ce markdown)
 
-# In[ ]:
+# In[52]:
 
 
 # explorer effet du seuil ROC 
@@ -1208,10 +1235,10 @@ for s in seuils_a_tester:
         print(f"Seuil manuel à {s:.1f}   : Accuracy = {acc_test*100:.2f}%")
 
 
-# In[ ]:
+# In[53]:
 
 
-# --- Visualisation de la courbe ROC ---
+# Visualisation de la courbe ROC
 fig, ax = plt.subplots(figsize=(8, 6))
 
 # Tracer la courbe ROC
@@ -1240,7 +1267,7 @@ plt.savefig(f"roc_curve_hurdle_{N_pays}_c.pdf", bbox_inches='tight')
 plt.show()
 
 
-# In[ ]:
+# In[54]:
 
 
 # Visualisations. Retrouver les graphes de la LogNormale écrasés par NegBin (oubli de renommer les savefig)
