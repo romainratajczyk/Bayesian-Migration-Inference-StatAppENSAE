@@ -22,6 +22,15 @@ flows       <- fread("ProjetStat/data/abelCohen2019flowsv6_flowdt.csv")
 dist_cepii  <- as.data.table(read_excel("ProjetStat/data/dist_cepii.xls"))
 geo_cepii   <- as.data.table(read_excel("ProjetStat/data/geo_cepii.xls"))
 
+
+# --- INSERTION ICI : HARMONISATION ROUMANIE ---
+for (dt in list(flows, top200, dist_cepii, geo_cepii)) {
+  cols <- names(dt)[sapply(dt, is.character)]
+  for (j in cols) {
+    dt[get(j) %in% c("ROM", "RO"), (j) := "ROU"]
+  }
+}
+
 flows[, `:=`(orig = toupper(orig), dest = toupper(dest), year0 = year0)]
 top200[, iso := toupper(iso)]
 
