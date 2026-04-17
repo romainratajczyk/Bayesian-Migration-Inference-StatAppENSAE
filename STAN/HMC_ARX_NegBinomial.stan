@@ -283,11 +283,7 @@ generated quantities {
     real mu_full = alpha_em[orig_id_test_v[n]] + gamma_at[dest_id_test_v[n]] + dot_product(X_v_test[n], beta_grav);
 
     if (d_v > 0) {
-      // Résolution immédiate des effets pays (valide même pour une dyade jamais vue en Train)
-    real mu_full = alpha_em[orig_id_test_v[n]] + gamma_at[dest_id_test_v[n]] + dot_product(X_v_test[n], beta_grav);
-
-    if (d_v > 0) {
-      // Application stricte de l'AR(1) inconditionnelle
+      // Application stricte de l'AR(1) inconditionnelle. 
       // Si la route est nouvelle (log_flow_lag == 0), la pénalité pionnière 
       // s'applique nativement : mu_full * (1 - rho_d)
       mu_dt_test[n] = mu_full + rho_d[d_v] * (log_flow_lag_test[n] - mu_full);
