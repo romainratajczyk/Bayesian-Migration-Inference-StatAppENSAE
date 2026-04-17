@@ -283,14 +283,18 @@ generated quantities {
     real mu_full = alpha_em[orig_id_test_v[n]] + gamma_at[dest_id_test_v[n]] + dot_product(X_v_test[n], beta_grav);
 
     if (d_v > 0) {
-      if (is_mig_lag_test[n] > 0) {
-        mu_dt_test[n] = mu_full + rho_d[d_v] * (log_flow_lag_test[n] - mu_full);
-      } else { 
-        mu_dt_test[n] = mu_full; // gravité pure, aucune inertie 
-      }
+      // Résolution immédiate des effets pays (valide même pour une dyade jamais vue en Train)
+    real mu_full = alpha_em[orig_id_test_v[n]] + gamma_at[dest_id_test_v[n]] + dot_product(X_v_test[n], beta_grav);
+
+    if (d_v > 0) {
+      // Application stricte de l'AR(1) inconditionnelle
+      // Si la route est nouvelle (log_flow_lag == 0), la pénalité pionnière 
+      // s'applique nativement : mu_full * (1 - rho_d)
+      mu_dt_test[n] = mu_full + rho_d[d_v] * (log_flow_lag_test[n] - mu_full);
       phi_test[n] = phi_disp_d[d_v];
     } else {
-      mu_dt_test[n] = mu_full;
+      // Dyades totalement inconnues en entraînement : application de l'inertie globale
+      mu_dt_test[n] = mu_full + rho_global * (log_flow_lag_test[n] - mu_full);
       phi_test[n] = phi_disp_cluster[k];
     }
   }
