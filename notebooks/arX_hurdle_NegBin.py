@@ -175,7 +175,7 @@
 # Coût CPU: negligeable. Coût RAM/Disque colossal.
 # Mettre la generation de log_lik de Stan avec interrupteur ==1 à mettre à 0 pour la production de figures et prédictions, et 1 pour la comparaison de modèles (lourds à simuler)
 
-# In[ ]:
+# In[1]:
 
 
 # Installation des bibliothèques non classiqus
@@ -199,7 +199,7 @@ cmdstanpy.install_cmdstan()
 # 
 # 
 
-# In[72]:
+# In[2]:
 
 
 import warnings
@@ -267,7 +267,7 @@ print(f"Extraction et simulation sur : {N_pays} pays.")
 
 
 
-# In[74]:
+# In[4]:
 
 
 # Clustering géographique (EXOGENE au modèle et PUBLI: ISO-3166 alpha-3. Inattaquable)
@@ -293,7 +293,7 @@ K_clusters = 6
 
 
 
-# In[75]:
+# In[5]:
 
 
 # Clustering géographique: Sous-régions ONU (norme M49)
@@ -370,7 +370,7 @@ if not problematic.empty:
 # Régularisation rigide vers le prior si volume de dyades modérés, overfitting si trop peu de dyades. 
 # La hiérarchie permet d'apprendre à partir de TOUTES les dyades. 
 
-# In[76]:
+# In[6]:
 
 
 # Features, lags et split train/test
@@ -483,7 +483,7 @@ K_grav, K_h = len(X_VOL_COLS), len(HURDLE_VARS)
 df = df_train
 
 
-# In[77]:
+# In[7]:
 
 
 # Séparation hurdle / volume
@@ -500,7 +500,7 @@ df_volume = df[df['flow'] > 0].dropna(subset=VOLUME_REQUIRED).copy().reset_index
 N_h, N_v = len(df_hurdle), len(df_volume)
 
 
-# In[78]:
+# In[8]:
 
 
 # Nettoyage exclusif de la covariable inertielle brute (sans centrage)
@@ -511,7 +511,7 @@ df_test['log_flow_lag_clean'] = (
 )
 
 
-# In[79]:
+# In[9]:
 
 
 # Encodage dyades et standardisation
@@ -557,7 +557,7 @@ X_h_std,   stats_h   = standardize_matrix(df_hurdle[HURDLE_VARS].values, HURDLE_
 
 
 
-# In[80]:
+# In[10]:
 
 
 # Préparation du jeu de test OOS
@@ -593,7 +593,7 @@ X_test_h_std, _ = standardize_matrix(df_test[HURDLE_VARS].values, HURDLE_VARS,
                                      BINARY_COLS_HUR, fit_stats=stats_h)
 
 
-# In[81]:
+# In[11]:
 
 
 # Nettoyage impératif des infinis (flux nuls passés en log)
@@ -604,7 +604,7 @@ df_volume = df_volume.replace([np.inf, -np.inf], np.nan).dropna(subset=VOLUME_RE
 print(f"Infinis dans Volume : {np.isinf(df_volume[X_VOL_COLS].values).sum()}")
 
 
-# In[82]:
+# In[12]:
 
 
 # réseau initial (avant perte temporelle ou vectorielle)
@@ -647,7 +647,7 @@ else:
     print("Aucun NaN détecté dans les colonnes ici.")
 
 
-# In[83]:
+# In[13]:
 
 
 tous_les_pays = sorted(list(set(df['orig'].unique()).union(set(df['dest'].unique()))))
@@ -663,7 +663,7 @@ df_hurdle['orig_id_h'] = df_hurdle['orig'].map(pays_to_id)
 df_hurdle['dest_id_h'] = df_hurdle['dest'].map(pays_to_id)
 
 
-# In[84]:
+# In[14]:
 
 
 # paramètres structurels macroéconomiques par pays 
@@ -721,7 +721,7 @@ Z_at = Z_mat
 # 
 # 
 
-# In[85]:
+# In[15]:
 
 
 stan_data = {
@@ -771,7 +771,7 @@ stan_data = {
 }
 
 
-# In[86]:
+# In[16]:
 
 
 # Sampling Stan parameters
@@ -784,7 +784,7 @@ THIN = 2
 N_DRAWS = ITER_SAMPLING // THIN
 
 
-# In[87]:
+# In[17]:
 
 
 # Sampling Stan
@@ -870,17 +870,17 @@ print(f"Outputs sécurisés sous : {custom_prefix}_chain*.csv")
 # 
 # Multicolinéarité parfaite: il faut strictement supprimer les variables monoadiques de X_v dans l'équation mu_ij=alpha_i + gamma_j + X_v*beta_grav. 
 
-# In[88]:
+# In[21]:
 
 
 # si perte de connexion à la cellule précédente: 
 # Ctrl + K + C/U pour commenter/décommenter
-# csv_files=csv_files = [
-#     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain1.csv",
-#     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain2.csv",
-#     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain3.csv",
-#     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain4.csv"
-#  ]
+csv_files=csv_files = [
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_70pays_4c_800it_chain1.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_70pays_4c_800it_chain2.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_70pays_4c_800it_chain3.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_70pays_4c_800it_chain4.csv"
+ ]
 print(f"Fichiers ciblés : {len(csv_files)}")
 
 # Lecture de l'en-tête
@@ -893,7 +893,7 @@ with open(csv_files[0], 'r') as f:
 
 vars_to_keep_main = [
     'prob_mig_test', 'mu_dt_test', 'phi_test',
-    'beta_grav', 'phi_disp_cluster', 'alpha_global',
+    'beta_grav', 'beta_h', 'phi_disp_cluster', 'alpha_global',
     'tau_alpha', 'beta_lag_m49', 'mu_em', 'mu_at', 
     'rho_global_monitor', 'phi_disp_global', 'divergent__'
 ]
@@ -954,12 +954,13 @@ prob_mig = df_final.filter(like='prob_mig_test').values
 mu_test = df_final.filter(like='mu_dt_test').values
 phi_t = df_final.filter(like='phi_test').values
 beta_grav = df_final.filter(like='beta_grav').values
+beta_h = df_final.filter(like='beta_h').values
 phi_disp_cluster = df_final.filter(like='phi_disp_cluster').values
 
 print(f"Shape de mu_test : {mu_test.shape}")
 
 
-# In[89]:
+# In[22]:
 
 
 # Chargement ArviZ optimisé RAM-efficient
@@ -998,7 +999,7 @@ print(f"Shape de mu_test : {mu_test.shape}")
 # 
 # Esperance de ZNTB: doit être définie sur R+, d'ou la prise de l'exponentielle puis inversion. Problème d'exponentiation sur les FP. 
 
-# In[90]:
+# In[39]:
 
 
 #  Purge des tirages asymétriques (NaN générés par pd.concat)
@@ -1049,7 +1050,7 @@ y_true_bin = (y_true > 0).astype(int)
 
 # Pondération de la fonction de perte (Asymétrie MAPE)
 # W_FP > 1 force l'algorithme à exiger une probabilité beaucoup plus élevée avant d'ouvrir un couloir.
-W_FP = 2.0
+W_FP = 5.0
 
 
 
@@ -1106,7 +1107,7 @@ print(f"  Max prédit      ({N_pays} pays) : {y_pred.max():,.0f} migrants")
 # 
 # D'où la prédiction max de 25 M ! 
 
-# In[91]:
+# In[40]:
 
 
 # Métriques OOS
@@ -1211,7 +1212,7 @@ print("-" * 75)
 # 
 # ### Nouveau: le Hurdle a été enrichi, mais les derniers % à attraper sont des cygnes noirs, qu'on aura probablement jamais. 
 
-# In[92]:
+# In[41]:
 
 
 import plotly.express as px
@@ -1277,7 +1278,7 @@ fig_fp.show()
 # Stan observe les 190 pays. Il voit que globalement, les pays avec une forte population ont une forte attraction observée dans Y. Le HMC ajuste donc le gradient de $\theta_{population}$ vers une valeur positive. 
 # Le prior d'un micro-état k (sans données de flux) se translate : son $\mu_k$ devient fortement négatif car $\theta_{population}$ est positif mais $\log(P_k)$ est très faible. Shrinkage de ce micro-état / ou pays instablevers un nouveau plancher propre, et non plus vers la moyenne mondiale. L'algo apprend les lois macroéconomiques sur les pays denses pour punir/contraindre l'ignorance sur les pays vides/insables, et ne plus reproduire les erreurs du précédent modèle (décrites ci dessus dans ce markdown)
 
-# In[93]:
+# In[42]:
 
 
 # explorer effet du seuil ROC 
@@ -1300,7 +1301,7 @@ for s in seuils_a_tester:
         print(f"Seuil manuel à {s:.1f}   : Accuracy = {acc_test*100:.2f}%")
 
 
-# In[94]:
+# In[43]:
 
 
 # Visualisation de la courbe ROC
@@ -1332,7 +1333,7 @@ plt.savefig(f"roc_curve_hurdle_{N_pays}_c.pdf", bbox_inches='tight')
 plt.show()
 
 
-# In[95]:
+# In[44]:
 
 
 # Visualisations. Retrouver les graphes de la LogNormale écrasés par NegBin (oubli de renommer les savefig)
@@ -1379,27 +1380,52 @@ plt.tight_layout()
 plt.savefig(f"NegBin_dispersion_cluster_M49_{N_pays}.pdf", bbox_inches='tight')
 plt.show()
 
+# Calcul des moments a posteriori pour le Volume
+beta_v_means = beta_grav.mean(axis=0)
+beta_v_q05, beta_v_q95 = np.percentile(beta_grav, [5, 95], axis=0)
+order_v = np.argsort(beta_v_means)
 
-beta_means = beta_grav.mean(axis=0)
-beta_q05, beta_q95 = np.percentile(beta_grav, [5, 95], axis=0)
+# Calcul des moments a posteriori pour le Hurdle
+beta_h_means = beta_h.mean(axis=0)
+beta_h_q05, beta_h_q95 = np.percentile(beta_h, [5, 95], axis=0)
+order_h = np.argsort(beta_h_means)
 
-order = np.argsort(beta_means)
+# Panneaux côtes à côtes
+fig, axes = plt.subplots(1, 2, figsize=(16, max(K_grav, K_h) * 0.5))
 
-fig, ax = plt.subplots(figsize=(10, max(6, K_grav * 0.4)))
+# panneau 2 : Hurdle, en BLEU
+ax_h = axes[0]
+# Bleu (#2196F3) si significatif, Gris (#90A4AE) sinon
+colors_h = ['#2196F3' if beta_h_q05[i] > 0 or beta_h_q95[i] < 0 else '#90A4AE' for i in order_h]
 
-colors_coef = ['#F44336' if beta_q05[i] > 0 or beta_q95[i] < 0 else '#90A4AE' for i in order]
+ax_h.barh(range(K_h), beta_h_means[order_h], 
+          xerr=[beta_h_means[order_h] - beta_h_q05[order_h], beta_h_q95[order_h] - beta_h_means[order_h]], 
+          color=colors_h, alpha=0.8, capsize=3)
 
-ax.barh(range(K_grav), beta_means[order], 
-        xerr=[beta_means[order] - beta_q05[order], beta_q95[order] - beta_means[order]], 
-        color=colors_coef, alpha=0.8, capsize=3)
+ax_h.set_yticks(range(K_h))
+ax_h.set_yticklabels([HURDLE_VARS[i] for i in order_h], fontsize=10)
+ax_h.axvline(0, color='black', lw=1, ls='--')
+ax_h.set_title("Hurdle (Logit) : Probabilité d'ouverture\nBleu = Significatif (IC 90%)")
+ax_h.set_xlabel("Impact sur les log-cotes")
 
-ax.set_yticks(range(K_grav))
-ax.set_yticklabels([X_VOL_COLS[i] for i in order], fontsize=9)
-ax.axvline(0, color='black', lw=1, ls='--')
-ax.set_title(f"Coefficients Gravité pour {N_pays} pays - IC 90%\nRouge = significatif (IC exclut 0)")
+# panneau 2 : Volume, en ROUGE
+ax_v = axes[1]
+# Rouge (#F44336) si significatif, Gris (#90A4AE) sinon
+colors_v = ['#F44336' if beta_v_q05[i] > 0 or beta_v_q95[i] < 0 else '#90A4AE' for i in order_v]
+
+ax_v.barh(range(K_grav), beta_v_means[order_v], 
+          xerr=[beta_v_means[order_v] - beta_v_q05[order_v], beta_v_q95[order_v] - beta_v_means[order_v]], 
+          color=colors_v, alpha=0.8, capsize=3)
+
+ax_v.set_yticks(range(K_grav))
+ax_v.set_yticklabels([X_VOL_COLS[i] for i in order_v], fontsize=10)
+ax_v.axvline(0, color='black', lw=1, ls='--')
+ax_v.set_title(f"Volume (ZTNB) : Intensité du flux ({N_pays} pays)\nRouge = Significatif (IC 90%)")
+ax_v.set_xlabel("Impact sur la log-espérance")
+
 
 plt.tight_layout()
-plt.savefig(f"NegBin_gravity_coefficients_{N_pays}_c.pdf", bbox_inches='tight')
+plt.savefig(f"Coefficients_Hurdle_Volume_{N_pays}pays.pdf", bbox_inches='tight')
 plt.show()     
 
 fig, axes = plt.subplots(1, 2, figsize=(16, 7))
@@ -1440,7 +1466,7 @@ plt.show()
 # Graphe de distribution des erreurs par dyades flux croissant: 
 # devrait ressembler à une bande horizontale diffuse. Tendance croissante pour les gros flux: l'erreur est positivement corrélée à la taille du flux, c'est problématique. 
 
-# In[96]:
+# In[45]:
 
 
 # import numpy as np
@@ -1499,15 +1525,29 @@ plt.show()
 #     print(f"Total divergences : {div_total:.0f}")
 
 
-# In[97]:
+# In[47]:
 
 
+# HURDLE (Probabilité d'ouverture) 
+beta_h_means = beta_h.mean(axis=0)
+beta_h_q05   = np.percentile(beta_h, 5, axis=0)
+beta_h_q95   = np.percentile(beta_h, 95, axis=0)
+
+print(f"\n[ HURDLE (Logit) | Simul {N_pays} pays ]")
+print(f"{'Variable':<25} {'Moyenne':>10} {'IC 5%':>10} {'IC 95%':>10}  {'Significatif?':>14}")
+print("-" * 75)
+for j, col in enumerate(HURDLE_VARS):
+    sig = "✓ OUI" if (beta_h_q05[j] > 0 or beta_h_q95[j] < 0) else "  non"
+    print(f"{col:<25} {beta_h_means[j]:>10.3f} {beta_h_q05[j]:>10.3f} {beta_h_q95[j]:>10.3f}  {sig:>14}")
+
+#  VOLUME (flow>0)
 beta_means = beta_grav.mean(axis=0)
-beta_q05   = np.percentile(beta_grav, 5,  axis=0)
+beta_q05   = np.percentile(beta_grav, 5, axis=0)
 beta_q95   = np.percentile(beta_grav, 95, axis=0)
 
-print(f"{f'Variable, simul {N_pays} pays':<25} {'Moyenne':>10} {'IC 5%':>10} {'IC 95%':>10}  {'Significatif?':>14}")
-print("-" * 65)
+print(f"\n[ VOLUME (ZTNB) | Simul {N_pays} pays ]")
+print(f"{'Variable':<25} {'Moyenne':>10} {'IC 5%':>10} {'IC 95%':>10}  {'Significatif?':>14}")
+print("-" * 75)
 for j, col in enumerate(X_VOL_COLS):
     sig = "✓ OUI" if (beta_q05[j] > 0 or beta_q95[j] < 0) else "  non"
     print(f"{col:<25} {beta_means[j]:>10.3f} {beta_q05[j]:>10.3f} {beta_q95[j]:>10.3f}  {sig:>14}")
