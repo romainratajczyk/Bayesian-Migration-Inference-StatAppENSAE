@@ -175,11 +175,11 @@
 # Coût CPU: negligeable. Coût RAM/Disque colossal.
 # Mettre la generation de log_lik de Stan avec interrupteur ==1 à mettre à 0 pour la production de figures et prédictions, et 1 pour la comparaison de modèles (lourds à simuler)
 
-# In[36]:
+# In[ ]:
 
 
 # Installation des bibliothèques non classiqus
-#get_ipython().system('pip install pycountry_convert arviz cmdstanpy')
+#!pip install pycountry_convert arviz cmdstanpy
 
 # compilation de Stan
 import cmdstanpy
@@ -199,7 +199,7 @@ cmdstanpy.install_cmdstan()
 # 
 # 
 
-# In[37]:
+# In[4]:
 
 
 import warnings
@@ -219,7 +219,7 @@ warnings.filterwarnings('ignore')
 np.random.seed(42)
 
 
-# In[38]:
+# In[5]:
 
 
 # Chargement & filtrage pays
@@ -227,7 +227,7 @@ np.random.seed(42)
 
 
 
-DATA_PATH = "../data/data_bayesian_arx_hurdle_v4.csv"
+DATA_PATH = "../data/data_bayesian_arx_hurdle_runB.csv"
 
 df_main = pd.read_csv(DATA_PATH)
 
@@ -284,7 +284,49 @@ print(f"Extraction et simulation sur : {N_pays} pays.")
 
 
 
-# In[39]:
+# In[10]:
+
+
+# ── RUN B : exclusion des pays structurellement absents du train 1990-2010 ──
+# Décommenter ce bloc pour Run B, commenter pour run full 200 pays.
+# Pays exclus : n'existaient pas comme entités souveraines sur 1990-2010,
+# ou sont des territoires sans données de flux cohérentes.
+# Pays conservés par rapport au run 188 pays : ROU, SRB, COD, PSE.
+
+PAYS_EXCLURE_RUN_B = {
+    'SSD',  # Indépendance juillet 2011 — aucun flux modélisable en train
+    'MNE',  # Indépendance juin 2006 — une seule période disponible (2010)
+    'TLS',  # Indépendance 2002 — choc discontinu post-indépendance
+    'CUW',  # Autonomie octobre 2010 — une seule période, insuffisant
+    'GUM',  # Territoire américain, absent des flux Abel & Cohen
+    'MYT',  # Territoire français, absent des flux Abel & Cohen
+    'VIR',  # Territoire américain, absent des flux Abel & Cohen
+    'CLI',  # Île Christmas, territoire australien minuscule
+}
+
+df = df[
+    ~df['orig'].isin(PAYS_EXCLURE_RUN_B) &
+    ~df['dest'].isin(PAYS_EXCLURE_RUN_B)
+].copy()
+
+pays_apres_exclusion = df['orig'].nunique()
+print(f"Run B — après exclusion des pays instables : {pays_apres_exclusion} pays")
+print(f"Pays exclus : {PAYS_EXCLURE_RUN_B}")
+
+# Vérification PSE et COD effectivement présents
+for pays in ['PSE', 'COD', 'ROU', 'SRB']:
+    present = pays in df['orig'].unique()
+    n_obs   = (df['orig'] == pays).sum()
+    print(f"  {pays} : {'présent' if present else 'ABSENT'} — {n_obs} obs comme origine")
+
+    # Vérification couverture GDP pour les pays récupérés
+for pays in ['PSE', 'COD', 'ROU', 'SRB']:
+    subset = df[df['orig'] == pays][['year', 'log_gdpcap_o_lag']].dropna()
+    annees = sorted(subset['year'].unique().tolist())
+    print(f"  {pays} — GDP lag non-NaN sur : {annees}")
+
+
+# In[7]:
 
 
 # Clustering géographique (EXOGENE au modèle et PUBLI: ISO-3166 alpha-3. Inattaquable)
@@ -310,7 +352,7 @@ K_clusters = 6
 
 
 
-# In[40]:
+# In[8]:
 
 
 # Clustering géographique: Sous-régions ONU (norme M49)
@@ -387,7 +429,7 @@ if not problematic.empty:
 # Régularisation rigide vers le prior si volume de dyades modérés, overfitting si trop peu de dyades. 
 # La hiérarchie permet d'apprendre à partir de TOUTES les dyades. 
 
-# In[41]:
+# In[9]:
 
 
 # Features, lags et split train/test
@@ -445,7 +487,7 @@ df       = df_train
 
 
 
-# In[42]:
+# In[ ]:
 
 
 # Séparation hurdle / volume
@@ -462,7 +504,7 @@ df_volume = df[df['flow'] > 0].dropna(subset=VOLUME_REQUIRED).copy().reset_index
 N_h, N_v = len(df_hurdle), len(df_volume)
 
 
-# In[43]:
+# In[ ]:
 
 
 # Nettoyage exclusif de la covariable inertielle brute (sans centrage)
@@ -473,7 +515,7 @@ df_test['log_flow_lag_clean'] = (
 )
 
 
-# In[44]:
+# In[ ]:
 
 
 # Encodage dyades et standardisation
@@ -519,7 +561,7 @@ X_h_std,   stats_h   = standardize_matrix(df_hurdle[HURDLE_VARS].values, HURDLE_
 
 
 
-# In[45]:
+# In[ ]:
 
 
 # Préparation du jeu de test OOS
@@ -555,7 +597,7 @@ X_test_h_std, _ = standardize_matrix(df_test[HURDLE_VARS].values, HURDLE_VARS,
                                      BINARY_COLS_HUR, fit_stats=stats_h)
 
 
-# In[46]:
+# In[ ]:
 
 
 # Nettoyage impératif des infinis (flux nuls passés en log)
@@ -566,7 +608,7 @@ df_volume = df_volume.replace([np.inf, -np.inf], np.nan).dropna(subset=VOLUME_RE
 print(f"Infinis dans Volume : {np.isinf(df_volume[X_VOL_COLS].values).sum()}")
 
 
-# In[47]:
+# In[ ]:
 
 
 # réseau initial (avant perte temporelle ou vectorielle)
@@ -609,7 +651,7 @@ else:
     print("Aucun NaN détecté dans les colonnes ici.")
 
 
-# In[48]:
+# In[ ]:
 
 
 tous_les_pays = sorted(list(set(df['orig'].unique()).union(set(df['dest'].unique()))))
@@ -625,7 +667,7 @@ df_hurdle['orig_id_h'] = df_hurdle['orig'].map(pays_to_id)
 df_hurdle['dest_id_h'] = df_hurdle['dest'].map(pays_to_id)
 
 
-# In[49]:
+# In[ ]:
 
 
 # paramètres structurels macroéconomiques par pays 
@@ -684,7 +726,7 @@ Z_at = Z_mat
 # 
 # 
 
-# In[50]:
+# In[ ]:
 
 
 stan_data = {
@@ -787,7 +829,7 @@ else:
     raise ValueError("INTERRUPTION : Corruption détectée dans stan_data. Le HMC crashera.")
 
 
-# In[52]:
+# In[ ]:
 
 
 # Sampling Stan parameters
@@ -800,7 +842,7 @@ THIN = 2
 N_DRAWS = ITER_SAMPLING // THIN
 
 
-# In[53]:
+# In[ ]:
 
 
 # Sampling Stan
@@ -892,10 +934,10 @@ print(f"Outputs sécurisés sous : {custom_prefix}_chain*.csv")
 # si perte de connexion à la cellule précédente: 
 # Ctrl + K + C/U pour commenter/décommenter
 csv_files=csv_files = [
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain1.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain2.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain3.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain4.csv"
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain1.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain2.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain3.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain4.csv"
  ]
 print(f"Fichiers ciblés : {len(csv_files)}")
 
@@ -1237,10 +1279,10 @@ import plotly.express as px
 df_test['y_true_bin'] = y_true_bin
 df_test['y_pred_bin'] = y_pred_bin
 
-# Faux Négatifs (FN) : Modèle dit fermé (0), Réalité ouverte (1). Cygne noir 
+# Faux Négatifs (FN): Modèle dit fermé (0), Réalité ouverte (1). Cygne noir 
 df_test['FN'] = ((df_test['y_true_bin'] == 1) & (df_test['y_pred_bin'] == 0)).astype(int)
 
-# Faux Positifs (FP) : Modèle dit ouvert (1), Réalité fermée (0). Fantôme 
+# Faux Positifs (FP): Modèle dit ouvert (1), Réalité fermée (0). Fantôme 
 df_test['FP'] = ((df_test['y_true_bin'] == 0) & (df_test['y_pred_bin'] == 1)).astype(int)
 
 # Agrégation spatiale par Etat émetteur (origine)
