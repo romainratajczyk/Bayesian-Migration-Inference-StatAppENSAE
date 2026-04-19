@@ -190,15 +190,15 @@ model {
   tau_h_at       ~ normal(0, 0.25);
   gamma_h_at_raw ~ std_normal();
 
-  beta_h[1]      ~ normal(-0.5, 0.5); // 1. Distance
+ beta_h[1]      ~ normal(-0.5, 0.5); // 1. Distance
   beta_h[2]      ~ normal(-0.5, 0.5); // 2. distance^2
   beta_h[3]      ~ normal(0, 2); // 3. Frontière commune
   beta_h[4]      ~ normal(0, 2); // 4. Interaction frontière_commune*distance
   beta_h[5]      ~ normal(0, 2); // 5. Colonie
   beta_h[6]      ~ normal(0, 2); // 6. Langue officielle
-  beta_h[7] ~ normal(1.0, 1.0); // Prior positif forcé pour 'logit_rf'. Le ML est présumé prédictif
-  beta_h[8] ~ normal(1.0, 1.0); // Prior strictement positif forcé pour log_TC_lag
-  // Variables 7 à 9 supprimées de beta_h car transférées dans Z_em / Z_at
+  beta_h[7]      ~ normal(1.0, 1.0); // Prior positif forcé pour 'logit_rf'. Le ML est présumé prédictif
+  beta_h[8]      ~ normal(1.0, 1.0); // Prior strictement positif forcé pour log_TC_lag
+  beta_h[9:K_h]  ~ normal(0, 1.0); // Régularisation des 8 variables géopolitiques dynamiques (indices 9 à K_h) (déjà standardisée, donc normal(0,1))
   
   mu_beta_lag    ~ normal(2.0, 2.5); // definition du prior à discuter
   sigma_beta_lag ~ exponential(1);
@@ -211,15 +211,18 @@ model {
   intercept_em ~ normal(0, 1);
   theta_em     ~ normal(0, 0.5);
   tau_em       ~ normal(0, 0.25); // half normal (tronqué car lower=0 déclaré)
-  alpha_em_raw ~ std_normal();  // equivalent strict et optimisé d'une boucle "for (p in 1:N_pays) alpha_em_raw[p] ~ normal(0, 1);""
+  alpha_em_raw ~ std_normal();  
   
   intercept_at ~ normal(0, 1);
   theta_at     ~ normal(0, 0.5);
   tau_at       ~ normal(0, 0.25); 
   gamma_at_raw ~ std_normal();
   
-
-  beta_grav      ~ normal(0, 1);
+  // Priors ciblés pour beta_grav (Volume)
+  beta_grav[1]     ~ normal(-0.5, 0.5); // 1. log_D_ij (Prior négatif pour la friction spatiale)
+  beta_grav[2:4]   ~ normal(0, 2.0);    // 2-4. LB_ij, OL_ij, COL_ij (Proximité historique/culturelle)
+  beta_grav[5:6]   ~ normal(0, 1.0);    // 5-6. t_2000, t_2000_sq (Non-linéarités temporelles)
+  beta_grav[7:K_v] ~ normal(0, 1.0);    // 7-K_v. Variables géopolitiques dynamiques standardisées
   rho_global_raw ~ normal(0.5, 0.5);
   tau_rho        ~ exponential(2);
   rho_raw        ~ std_normal();
@@ -283,14 +286,14 @@ generated quantities {
     real mu_full = alpha_em[orig_id_test_v[n]] + gamma_at[dest_id_test_v[n]] + dot_product(X_v_test[n], beta_grav);
 
     if (d_v > 0) {
-      if (is_mig_lag_test[n] > 0) {
-        mu_dt_test[n] = mu_full + rho_d[d_v] * (log_flow_lag_test[n] - mu_full);
-      } else { 
-        mu_dt_test[n] = mu_full; // gravité pure, aucune inertie 
-      }
+      // Application stricte de l'AR(1) inconditionnelle. 
+      // Si la route est nouvelle (log_flow_lag == 0), la pénalité pionnière 
+      // s'applique nativement : mu_full * (1 - rho_d)
+      mu_dt_test[n] = mu_full + rho_d[d_v] * (log_flow_lag_test[n] - mu_full);
       phi_test[n] = phi_disp_d[d_v];
     } else {
-      mu_dt_test[n] = mu_full;
+      // Dyades totalement inconnues en entraînement : application de l'inertie globale
+      mu_dt_test[n] = mu_full + rho_global * (log_flow_lag_test[n] - mu_full);
       phi_test[n] = phi_disp_cluster[k];
     }
   }

@@ -175,11 +175,11 @@
 # Coût CPU: negligeable. Coût RAM/Disque colossal.
 # Mettre la generation de log_lik de Stan avec interrupteur ==1 à mettre à 0 pour la production de figures et prédictions, et 1 pour la comparaison de modèles (lourds à simuler)
 
-# In[15]:
+# In[10]:
 
 
 # Installation des bibliothèques non classiqus
-#get_ipython().system('pip install pycountry_convert arviz cmdstanpy')
+#!pip install pycountry_convert arviz cmdstanpy
 
 # compilation de Stan
 import cmdstanpy
@@ -199,7 +199,7 @@ cmdstanpy.install_cmdstan()
 # 
 # 
 
-# In[16]:
+# In[11]:
 
 
 import warnings
@@ -212,13 +212,14 @@ import pycountry_convert as pc
 from cmdstanpy import CmdStanModel
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve  
+#from sklearn.preprocessing import StandardScaler
 #import plotly.express as px
 
 warnings.filterwarnings('ignore')
 np.random.seed(42)
 
 
-# In[17]:
+# In[12]:
 
 
 # Chargement & filtrage pays
@@ -226,7 +227,7 @@ np.random.seed(42)
 
 
 
-DATA_PATH = "../data/FINAL_GRAVITY_TRAINING_MATRIX.csv"
+DATA_PATH = "../data/data_bayesian_arx_hurdle_runB.csv"
 
 df_main = pd.read_csv(DATA_PATH)
 
@@ -236,20 +237,38 @@ df_main = pd.read_csv(DATA_PATH)
 CHOIX_ECHANTILLON = 5
 
 # listes pré-définies 
-L_30 = ['FRA', 'USA', 'DEU', 'GBR', 'JPN', 'CAN', 'AUS', 'ITA', 'DZA', 'MAR', 'ZAF', 'NGA', 'EGY', 'SEN', 'CIV', 'KEN', 'MEX', 'BRA', 'ARG', 'COL', 'CHL', 'PER', 'CHN', 'IND', 'TUR', 'IDN', 'KOR', 'SAU', 'VNM', 'THA']
+L_30 = [
+    'USA', 'FRA', 'DEU', 'GBR', 'CHN', 'IND', 'BRA', 'RUS', # Pôles gravitationnels
+    'SYR', 'AFG', 'LBY', 'UKR', 'VEN', 'EGY', 'TUR', 'SDN', # Chocs UCDP/V-Dem critiques
+    'YEM', 'COD', 'MLI', 'IRQ', 'MMR', 'SSD', 'SOM', 'BGD', 
+    'PAK', 'ZAF', 'MAR', 'MEX', 'NGA', 'IDN'
+]
 
-L_70 = L_30 + ['ESP', 'CHE', 'SWE', 'NLD', 'BEL', 'NOR', 'AUT', 'PRT', 'NZL', 'RUS', 'POL', 'RWA', 'COD', 'ETH', 'TUN', 'MLI', 'GHA', 'AGO', 'SDN', 'CMR', 'TZA', 'UGA', 'MOZ', 'VEN', 'CUB', 'ECU', 'DOM', 'CRI', 'BOL', 'URY', 'PAK', 'PHL', 'BGD', 'IRQ', 'ARE', 'IRN', 'ISR', 'MYS', 'SGP', 'KAZ']
 
-L_110 = L_70 + ['DNK', 'FIN', 'IRL', 'CZE', 'GRC', 'HUN', 'ROU', 'BGR', 'HRV', 'UKR', 'SRB', 'SOM', 'LBY', 'ZMB', 'ZWE', 'TCD', 'BFA', 'GIN', 'MDG', 'MWI', 'BDI', 'TGO', 'HTI', 'SLV', 'GTM', 'HND', 'PRY', 'NIC', 'PAN', 'MMR', 'SYR', 'AFG', 'YEM', 'LBN', 'UZB', 'JOR', 'LKA', 'NPL', 'KHM', 'OMN']
+L_70 = L_30 + [
+    'JPN', 'CAN', 'THA', 'PHL', 'HUN', 'DZA', 'ZWE', 'KEN', 
+    'CIV', 'SAU', 'ARE', 'ARG', 'CHL', 'ESP', 'ITA', 
+    'ISR', 'IRN', 'MYS', 'KOR', 'AUS', 'CHE', 'SWE', 'NLD', 
+    'BEL', 'POL', 'GRC', 'SEN', 'GHA', 'TZA', 'UGA', 'PER', 
+    'RWA', 'ETH', 'LBN', 'COL', 'AGO', 'CMR', 'MOZ', 'ECU', 'URY'
+]
 
-L_140 = L_110 + ['SVK', 'SVN', 'EST', 'LVA', 'LTU', 'ISL', 'CYP', 'LUX', 'ALB', 'BLR', 'BEN', 'SLE', 'LBR', 'MRT', 'CAF', 'COG', 'GAB', 'NAM', 'NER', 'JAM', 'TTO', 'BHS', 'BRB', 'BLZ', 'QAT', 'LAO', 'KWT', 'MNG', 'TJK', 'KGZ']  
+
+L_110 = L_70 + [
+    'DNK', 'FIN', 'IRL', 'CZE', 'ROU', 'BGR', 'HRV', 'SRB', 
+    'ZMB', 'TCD', 'BFA', 'GIN', 'MDG', 'MWI', 'BDI', 'TGO', 
+    'HTI', 'SLV', 'GTM', 'HND', 'PRY', 'NIC', 'PAN', 'UZB', 
+    'JOR', 'LKA', 'NPL', 'KHM', 'OMN', 'CUB', 'DOM', 'CRI', 
+    'BOL', 'SGP', 'KAZ', 'TUN', 'KWT', 'QAT', 'BEN', 'BWA'
+]
+# L_140 = L_110 + ['SVK', 'SVN', 'EST', 'LVA', 'LTU', 'ISL', 'CYP', 'LUX', 'ALB', 'BLR', 'BEN', 'SLE', 'LBR', 'MRT', 'CAF', 'COG', 'GAB', 'NAM', 'NER', 'JAM', 'TTO', 'BHS', 'BRB', 'BLZ', 'QAT', 'LAO', 'KWT', 'MNG', 'TJK', 'KGZ']  
 
 if CHOIX_ECHANTILLON == 5:
     # Option 5 : Utilisation de la totalité du Df
     df = df_main[df_main['orig'] != df_main['dest']].copy()
 else:
 
-    map_listes = {1: L_30, 2: L_70, 3: L_110, 4: L_140}
+    map_listes = {1: L_30, 2: L_70, 3: L_110}#, 4: L_140}
     cible = map_listes[CHOIX_ECHANTILLON]
 
     df = df_main[
@@ -265,7 +284,49 @@ print(f"Extraction et simulation sur : {N_pays} pays.")
 
 
 
-# In[18]:
+# In[13]:
+
+
+# ── RUN B : exclusion des pays structurellement absents du train 1990-2010 ──
+# Décommenter ce bloc pour Run B, commenter pour run full 200 pays.
+# Pays exclus : n'existaient pas comme entités souveraines sur 1990-2010,
+# ou sont des territoires sans données de flux cohérentes.
+# Pays conservés par rapport au run 188 pays : ROU, SRB, COD, PSE.
+
+PAYS_EXCLURE_RUN_B = {
+    'SSD',  # Indépendance juillet 2011 — aucun flux modélisable en train
+    'MNE',  # Indépendance juin 2006 — une seule période disponible (2010)
+    'TLS',  # Indépendance 2002 — choc discontinu post-indépendance
+    'CUW',  # Autonomie octobre 2010 — une seule période, insuffisant
+    'GUM',  # Territoire américain, absent des flux Abel & Cohen
+    'MYT',  # Territoire français, absent des flux Abel & Cohen
+    'VIR',  # Territoire américain, absent des flux Abel & Cohen
+    'CLI',  # Île Christmas, territoire australien minuscule
+}
+
+df = df[
+    ~df['orig'].isin(PAYS_EXCLURE_RUN_B) &
+    ~df['dest'].isin(PAYS_EXCLURE_RUN_B)
+].copy()
+
+pays_apres_exclusion = df['orig'].nunique()
+print(f"Run B — après exclusion des pays instables : {pays_apres_exclusion} pays")
+print(f"Pays exclus : {PAYS_EXCLURE_RUN_B}")
+
+# Vérification PSE et COD effectivement présents
+for pays in ['PSE', 'COD', 'ROU', 'SRB']:
+    present = pays in df['orig'].unique()
+    n_obs   = (df['orig'] == pays).sum()
+    print(f"  {pays} : {'présent' if present else 'ABSENT'} — {n_obs} obs comme origine")
+
+    # Vérification couverture GDP pour les pays récupérés
+for pays in ['PSE', 'COD', 'ROU', 'SRB']:
+    subset = df[df['orig'] == pays][['year', 'log_gdpcap_o_lag']].dropna()
+    annees = sorted(subset['year'].unique().tolist())
+    print(f"  {pays} — GDP lag non-NaN sur : {annees}")
+
+
+# In[14]:
 
 
 # Clustering géographique (EXOGENE au modèle et PUBLI: ISO-3166 alpha-3. Inattaquable)
@@ -291,35 +352,35 @@ K_clusters = 6
 
 
 
-# In[19]:
+# In[15]:
 
 
 # Clustering géographique: Sous-régions ONU (norme M49)
 
 ISO3_TO_M49_SUBREGION = {
-    # --- Europe ---
+    #  Europe 
     'DNK': 11, 'EST': 11, 'FIN': 11, 'ISL': 11, 'IRL': 11, 'LVA': 11, 'LTU': 11, 'NOR': 11, 'SWE': 11, 'GBR': 11,
     'ALB': 12, 'AND': 12, 'BIH': 12, 'HRV': 12, 'GRC': 12, 'ITA': 12, 'MLT': 12, 'MNE': 12, 'MKD': 12, 'PRT': 12, 'SRB': 12, 'SVN': 12, 'ESP': 12,
     'AUT': 13, 'BEL': 13, 'FRA': 13, 'DEU': 13, 'LIE': 13, 'LUX': 13, 'MCO': 13, 'NLD': 13, 'CHE': 13,
     'BLR': 14, 'BGR': 14, 'CZE': 14, 'HUN': 14, 'POL': 14, 'MDA': 14, 'ROU': 14, 'RUS': 14, 'SVK': 14, 'UKR': 14,
-    # --- Afrique ---
+    #  Afrique 
     'DZA': 15, 'EGY': 15, 'LBY': 15, 'MAR': 15, 'SDN': 15, 'TUN': 15, 'ESH': 15,
     'BEN': 16, 'BFA': 16, 'CPV': 16, 'CIV': 16, 'GMB': 16, 'GHA': 16, 'GIN': 16, 'GNB': 16, 'LBR': 16, 'MLI': 16, 'MRT': 16, 'NER': 16, 'NGA': 16, 'SEN': 16, 'SLE': 16, 'TGO': 16,
     'BDI': 17, 'COM': 17, 'DJI': 17, 'ERI': 17, 'ETH': 17, 'KEN': 17, 'MDG': 17, 'MWI': 17, 'MUS': 17, 'MOZ': 17, 'RWA': 17, 'SYC': 17, 'SOM': 17, 'SSD': 17, 'TZA': 17, 'UGA': 17, 'ZMB': 17, 'ZWE': 17,
     'AGO': 18, 'CMR': 18, 'CAF': 18, 'TCD': 18, 'COD': 18, 'COG': 18, 'GNQ': 18, 'GAB': 18, 'STP': 18,
     'BWA': 19, 'LSO': 19, 'NAM': 19, 'ZAF': 19, 'SWZ': 19,
-    # --- Amériques ---
+    #  Amériques 
     'CAN': 21, 'MEX': 21, 'USA': 21,
     'BLZ': 22, 'CRI': 22, 'SLV': 22, 'GTM': 22, 'HND': 22, 'NIC': 22, 'PAN': 22,
     'ATG': 23, 'BHS': 23, 'BRB': 23, 'CUB': 23, 'DMA': 23, 'DOM': 23, 'GRD': 23, 'HTI': 23, 'JAM': 23, 'KNA': 23, 'LCA': 23, 'VCT': 23, 'TTO': 23, 'ABW': 23, 'PRI': 23,
     'ARG': 24, 'BOL': 24, 'BRA': 24, 'CHL': 24, 'COL': 24, 'ECU': 24, 'GUY': 24, 'PRY': 24, 'PER': 24, 'SUR': 24, 'URY': 24, 'VEN': 24,
-    # --- Asie ---
+    #  Asie 
     'CHN': 30, 'HKG': 30, 'JPN': 30, 'KOR': 30, 'MAC': 30, 'MNG': 30, 'PRK': 30,
     'AFG': 34, 'BGD': 34, 'BTN': 34, 'IND': 34, 'IRN': 34, 'MDV': 34, 'NPL': 34, 'PAK': 34, 'LKA': 34,
     'BRN': 35, 'KHM': 35, 'IDN': 35, 'LAO': 35, 'MYS': 35, 'MMR': 35, 'PHL': 35, 'SGP': 35, 'THA': 35, 'TLS': 35, 'VNM': 35,
     'ARM': 145, 'AZE': 145, 'BHR': 145, 'CYP': 145, 'GEO': 145, 'IRQ': 145, 'ISR': 145, 'JOR': 145, 'KWT': 145, 'LBN': 145, 'OMN': 145, 'QAT': 145, 'SAU': 145, 'PSE': 145, 'SYR': 145, 'TUR': 145, 'ARE': 145, 'YEM': 145,
     'KAZ': 143, 'KGZ': 143, 'TJK': 143, 'TKM': 143, 'UZB': 143,
-    # --- Océanie ---
+    #  Océanie 
     'AUS': 53, 'FJI': 53, 'NZL': 53, 'PNG': 53, 'SLB': 53, 'VUT': 53, 'WSM': 53, 'TON': 53, 'KIR': 53, 'FSM': 53, 'GUM': 53, 'NCL': 53, 'PYF': 53,
 }
 
@@ -368,23 +429,22 @@ if not problematic.empty:
 # Régularisation rigide vers le prior si volume de dyades modérés, overfitting si trop peu de dyades. 
 # La hiérarchie permet d'apprendre à partir de TOUTES les dyades. 
 
-# In[ ]:
+# In[16]:
 
 
 # Features, lags et split train/test
 
 df['is_migration'] = (df['flow'] > 0).astype(int)
 df['log_flow']     = np.where(df['flow'] > 0, np.log(df['flow']), np.nan)
-
+df['log_flow_lag'] = df.groupby(['orig', 'dest'])['log_flow'].shift(1)
 SEUIL_LOG_GDP       = 2.9
 df['is_rich_o']     = (df['log_gdpcap_o_lag'] > SEUIL_LOG_GDP).astype(float)
-
+df['is_mig_lag']   = df.groupby(['orig', 'dest'])['is_migration'].shift(1)
 df['log_D_ij']      = np.log(df['D_ij'].replace(0, np.nan))
 df['logD_times_LB'] = df['log_D_ij'] * df['LB_ij']
 
 df['dyad']          = df['orig'] + "_" + df['dest']
-df['is_mig_lag']    = df.groupby('dyad')['is_migration'].shift(1)
-df['log_flow_lag']  = df.groupby('dyad')['log_flow'].shift(1)
+
 df = df.dropna(subset=['is_mig_lag']).reset_index(drop=True)
 df['log_D_ij_sq'] = df['log_D_ij'] ** 2
 HURDLE_VARS = [
@@ -393,7 +453,8 @@ HURDLE_VARS = [
     'LB_ij',          # 2. Frontière commune
     'logD_times_LB',  # 3. Interaction
     'COL_ij',         # 4. Colonie
-    'OL_ij']#,          # 5. Langue officielle
+    'OL_ij', 'v2x_polyarchy_o_lag', 'v2x_clphy_o_lag', 'intensity_level_o_lag', 'type_of_conflict_o_lag',
+    'v2x_polyarchy_d_lag', 'v2x_clphy_d_lag', 'intensity_level_d_lag', 'type_of_conflict_d_lag']#,          # 5. Langue officielle
     #'log_P_it',       # 6. Population Origine
     #'log_P_jt',       # 7. Population Destination
     #'log_gdpcap_d_lag'# 8. PIB Destination
@@ -410,8 +471,12 @@ GRAVITY_VARS_BIN = ['LB_ij', 'OL_ij', 'COL_ij', 't_2000', 't_2000_sq']
 for raw in GRAVITY_VARS_RAW:
     df[f'log_{raw}'] = np.log(df[raw].replace(0, np.nan))
 
-# PURGE STRICTE Des effets monoadiqyes du  VOLUME
-X_VOL_COLS = ['log_D_ij'] + GRAVITY_VARS_BIN 
+# PURGE STRICTE Des effets monoadiqyes du  VOLUME (sauf si dimension temporelle, dans ce cas orthogonalité, pas de colinéarité parfaite possible)
+X_VOL_COLS = [
+    'log_D_ij', 'LB_ij', 'OL_ij', 'COL_ij', 't_2000', 't_2000_sq',
+    'v2x_polyarchy_o_lag', 'v2x_clphy_o_lag', 'intensity_level_o_lag', 'type_of_conflict_o_lag',
+    'v2x_polyarchy_d_lag', 'v2x_clphy_d_lag', 'intensity_level_d_lag', 'type_of_conflict_d_lag'
+] 
 
 K_grav, K_h = len(X_VOL_COLS), len(HURDLE_VARS)
 
@@ -422,12 +487,10 @@ df       = df_train
 
 
 
-# In[21]:
+# In[17]:
 
 
 # Séparation hurdle / volume
-
-
 
 HURDLE_REQUIRED = HURDLE_VARS + ['is_mig_lag', 'is_migration', 'dyad', 'continent_orig']
 df_hurdle = df.dropna(subset=HURDLE_REQUIRED).copy().reset_index(drop=True)
@@ -437,12 +500,13 @@ VOLUME_REQUIRED = X_VOL_COLS + ['flow', 'log_flow_lag', 'dyad', 'continent_orig'
 df_volume = df[df['flow'] > 0].dropna(subset=VOLUME_REQUIRED).copy().reset_index(drop=True)
 
 N_h, N_v = len(df_hurdle), len(df_volume)
+print(f"Hurdle : {N_h:,} obs | Volume : {N_v:,} obs")
 
 
-# In[22]:
+# In[ ]:
 
 
-# Nettoyage exclusif de la covariable inertielle brute (sans centrage)
+# Nettoyage exclusif de la covariable inertielle brute (sans centrage). Penalité AR1 dans metriques OOS prediction, le modèle ne voit jamais de couloirs fermés en t-1 en train
 df_test['log_flow_lag_clean'] = (
     df_test['log_flow_lag']
     .fillna(0.0)
@@ -450,7 +514,7 @@ df_test['log_flow_lag_clean'] = (
 )
 
 
-# In[23]:
+# In[19]:
 
 
 # Encodage dyades et standardisation
@@ -496,7 +560,7 @@ X_h_std,   stats_h   = standardize_matrix(df_hurdle[HURDLE_VARS].values, HURDLE_
 
 
 
-# In[24]:
+# In[20]:
 
 
 # Préparation du jeu de test OOS
@@ -532,7 +596,7 @@ X_test_h_std, _ = standardize_matrix(df_test[HURDLE_VARS].values, HURDLE_VARS,
                                      BINARY_COLS_HUR, fit_stats=stats_h)
 
 
-# In[25]:
+# In[21]:
 
 
 # Nettoyage impératif des infinis (flux nuls passés en log)
@@ -543,7 +607,7 @@ df_volume = df_volume.replace([np.inf, -np.inf], np.nan).dropna(subset=VOLUME_RE
 print(f"Infinis dans Volume : {np.isinf(df_volume[X_VOL_COLS].values).sum()}")
 
 
-# In[26]:
+# In[22]:
 
 
 # réseau initial (avant perte temporelle ou vectorielle)
@@ -586,7 +650,7 @@ else:
     print("Aucun NaN détecté dans les colonnes ici.")
 
 
-# In[ ]:
+# In[23]:
 
 
 tous_les_pays = sorted(list(set(df['orig'].unique()).union(set(df['dest'].unique()))))
@@ -602,12 +666,13 @@ df_hurdle['orig_id_h'] = df_hurdle['orig'].map(pays_to_id)
 df_hurdle['dest_id_h'] = df_hurdle['dest'].map(pays_to_id)
 
 
-# In[ ]:
+# In[24]:
 
 
 # paramètres structurels macroéconomiques par pays 
 K_Z = 2 # Nombre de variables d'hyper-régression (log Pop, log GDP, on utilise plus log IMR)
 Z_mat = np.zeros((N_pays_total, K_Z))
+
 
 for pays, pays_id in pays_to_id.items():
     idx = pays_id - 1 
@@ -660,7 +725,7 @@ Z_at = Z_mat
 # 
 # 
 
-# In[ ]:
+# In[25]:
 
 
 stan_data = {
@@ -710,7 +775,60 @@ stan_data = {
 }
 
 
-# In[ ]:
+# In[26]:
+
+
+# cellule d'audit vibe-codé, pas très grave car fonctionnelle, vérifiée. 
+
+
+# AUDIT D'INTÉGRITÉ DIMENSIONNELLE ET MATRICIELLE PRE-STAN
+
+
+# Bilan de la déperdition de l'information (Base Origine != Dest)
+mask_base = (df_main['orig'] != df_main['dest'])
+N_total = mask_base.sum()
+
+# Séparation des dimensions temporelles théoriques
+N_train_theorique = (mask_base & (df_main['year'] <= 2010)).sum()
+N_test_theorique  = (mask_base & (df_main['year'] == 2015)).sum()
+
+# Calcul des pertes dues aux dropna (indépendant de la coupure 2015)
+perte_train = N_train_theorique - len(df_hurdle)
+perte_test  = N_test_theorique - len(df_test)
+
+print("─── DÉCOMPOSITION DE L'ÉCHANTILLON ──────────────────────────────")
+print(f"Espace tensoriel brut (Orig != Dest) : {N_total:,} obs")
+print(f"  ├─ Troncature Train (<=2010)       : {N_train_theorique:,} obs")
+print(f"  │  └─ Après dropna (df_hurdle)     : {len(df_hurdle):,} obs")
+print(f"  │  └─ Perte intra-Train nette      : -{perte_train:,} obs ({(perte_train/N_train_theorique)*100:.2f}%)")
+print(f"  │")
+print(f"  └─ Troncature Test OOS (2015)      : {N_test_theorique:,} obs")
+print(f"     └─ Après dropna (df_test)       : {len(df_test):,} obs")
+print(f"     └─ Perte intra-Test nette       : -{perte_test:,} obs ({(perte_test/N_test_theorique)*100:.2f}%)")
+print("─────────────────────────────────────────────────────────────────\n")
+
+# Validation de l'intégrité numérique du dictionnaire stan_data
+print("─── SCAN DE CORRUPTION STAN_DATA ────────────────────────────────")
+anomalies_fatales = 0
+
+for key, val in stan_data.items():
+    if isinstance(val, (list, np.ndarray)):
+        arr = np.array(val)
+        if np.issubdtype(arr.dtype, np.number):
+            n_nan = np.isnan(arr).sum()
+            n_inf = np.isinf(arr).sum()
+            if n_nan > 0 or n_inf > 0:
+                print(f"[ERREUR] Variable '{key}' -> {n_nan} NaN | {n_inf} Inf")
+                anomalies_fatales += 1
+
+if anomalies_fatales == 0:
+    print("[CLINIQUE] 0 NaN, 0 Inf détectés dans stan_data. "
+          "Vecteurs purs.\nTransmission au C++ autorisée.")
+else:
+    raise ValueError("INTERRUPTION : Corruption détectée dans stan_data. Le HMC crashera.")
+
+
+# In[27]:
 
 
 # Sampling Stan parameters
@@ -723,7 +841,7 @@ THIN = 2
 N_DRAWS = ITER_SAMPLING // THIN
 
 
-# In[ ]:
+# In[28]:
 
 
 # Sampling Stan
@@ -809,17 +927,17 @@ print(f"Outputs sécurisés sous : {custom_prefix}_chain*.csv")
 # 
 # Multicolinéarité parfaite: il faut strictement supprimer les variables monoadiques de X_v dans l'équation mu_ij=alpha_i + gamma_j + X_v*beta_grav. 
 
-# In[31]:
+# In[ ]:
 
 
 # si perte de connexion à la cellule précédente: 
 # Ctrl + K + C/U pour commenter/décommenter
 csv_files=csv_files = [
-    "/Users/romain/Desktop/onyxia/HMC_ARX_NegBinomial-20260415204404_1.csv",
-    "/Users/romain/Desktop/onyxia/HMC_ARX_NegBinomial-20260415204404_2.csv"]#,
-#     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain3.csv",
-#     "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_199pays_4c_800it_chain4.csv"
-# ]
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain1.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain2.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain3.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain4.csv"
+ ]
 print(f"Fichiers ciblés : {len(csv_files)}")
 
 # Lecture de l'en-tête
@@ -833,7 +951,7 @@ with open(csv_files[0], 'r') as f:
 vars_to_keep_main = [
     'prob_mig_test', 'mu_dt_test', 'phi_test',
     'beta_grav', 'phi_disp_cluster', 'alpha_global',
-    'tau_alpha', 'beta_lag_m49', 'mu_em', 'mu_at', 
+    'tau_alpha', 'beta_h', 'beta_lag_m49', 'mu_em', 'mu_at', 
     'rho_global_monitor', 'phi_disp_global', 'divergent__'
 ]
 vars_to_keep_loo = ['log_lik_h', 'log_lik_v']
@@ -893,12 +1011,13 @@ prob_mig = df_final.filter(like='prob_mig_test').values
 mu_test = df_final.filter(like='mu_dt_test').values
 phi_t = df_final.filter(like='phi_test').values
 beta_grav = df_final.filter(like='beta_grav').values
+beta_h = df_final.filter(like='beta_h').values
 phi_disp_cluster = df_final.filter(like='phi_disp_cluster').values
 
 print(f"Shape de mu_test : {mu_test.shape}")
 
 
-# In[18]:
+# In[ ]:
 
 
 # Chargement ArviZ optimisé RAM-efficient
@@ -988,7 +1107,7 @@ y_true_bin = (y_true > 0).astype(int)
 
 # Pondération de la fonction de perte (Asymétrie MAPE)
 # W_FP > 1 force l'algorithme à exiger une probabilité beaucoup plus élevée avant d'ouvrir un couloir.
-W_FP = 10.0
+W_FP = 5.0
 
 
 
@@ -1045,7 +1164,7 @@ print(f"  Max prédit      ({N_pays} pays) : {y_pred.max():,.0f} migrants")
 # 
 # D'où la prédiction max de 25 M ! 
 
-# In[50]:
+# In[ ]:
 
 
 # Métriques OOS
@@ -1150,7 +1269,7 @@ print("-" * 75)
 # 
 # ### Nouveau: le Hurdle a été enrichi, mais les derniers % à attraper sont des cygnes noirs, qu'on aura probablement jamais. 
 
-# In[51]:
+# In[ ]:
 
 
 import plotly.express as px
@@ -1159,10 +1278,10 @@ import plotly.express as px
 df_test['y_true_bin'] = y_true_bin
 df_test['y_pred_bin'] = y_pred_bin
 
-# Faux Négatifs (FN) : Modèle dit fermé (0), Réalité ouverte (1). Cygne noir 
+# Faux Négatifs (FN): Modèle dit fermé (0), Réalité ouverte (1). Cygne noir 
 df_test['FN'] = ((df_test['y_true_bin'] == 1) & (df_test['y_pred_bin'] == 0)).astype(int)
 
-# Faux Positifs (FP) : Modèle dit ouvert (1), Réalité fermée (0). Fantôme 
+# Faux Positifs (FP): Modèle dit ouvert (1), Réalité fermée (0). Fantôme 
 df_test['FP'] = ((df_test['y_true_bin'] == 0) & (df_test['y_pred_bin'] == 1)).astype(int)
 
 # Agrégation spatiale par Etat émetteur (origine)
@@ -1216,7 +1335,7 @@ fig_fp.show()
 # Stan observe les 190 pays. Il voit que globalement, les pays avec une forte population ont une forte attraction observée dans Y. Le HMC ajuste donc le gradient de $\theta_{population}$ vers une valeur positive. 
 # Le prior d'un micro-état k (sans données de flux) se translate : son $\mu_k$ devient fortement négatif car $\theta_{population}$ est positif mais $\log(P_k)$ est très faible. Shrinkage de ce micro-état / ou pays instablevers un nouveau plancher propre, et non plus vers la moyenne mondiale. L'algo apprend les lois macroéconomiques sur les pays denses pour punir/contraindre l'ignorance sur les pays vides/insables, et ne plus reproduire les erreurs du précédent modèle (décrites ci dessus dans ce markdown)
 
-# In[52]:
+# In[ ]:
 
 
 # explorer effet du seuil ROC 
@@ -1239,7 +1358,7 @@ for s in seuils_a_tester:
         print(f"Seuil manuel à {s:.1f}   : Accuracy = {acc_test*100:.2f}%")
 
 
-# In[53]:
+# In[ ]:
 
 
 # Visualisation de la courbe ROC
@@ -1271,7 +1390,7 @@ plt.savefig(f"roc_curve_hurdle_{N_pays}_c.pdf", bbox_inches='tight')
 plt.show()
 
 
-# In[54]:
+# In[ ]:
 
 
 # Visualisations. Retrouver les graphes de la LogNormale écrasés par NegBin (oubli de renommer les savefig)
@@ -1441,13 +1560,33 @@ plt.show()
 # In[ ]:
 
 
-beta_means = beta_grav.mean(axis=0)
-beta_q05   = np.percentile(beta_grav, 5,  axis=0)
-beta_q95   = np.percentile(beta_grav, 95, axis=0)
+import numpy as np
 
-print(f"{f'Variable, simul {N_pays} pays':<25} {'Moyenne':>10} {'IC 5%':>10} {'IC 95%':>10}  {'Significatif?':>14}")
-print("-" * 65)
-for j, col in enumerate(X_VOL_COLS):
+# HURDLE (Probabilité d'ouverture) 
+beta_h_means = beta_h.mean(axis=0)
+beta_h_q05   = np.percentile(beta_h, 5, axis=0)
+beta_h_q95   = np.percentile(beta_h, 95, axis=0)
+K_h_sim = beta_h_means.shape[0]
+
+print(f"\n[ HURDLE (Logit) | Simul {N_pays} pays ]")
+print(f"{'Variable':<25} {'Moyenne':>10} {'IC 5%':>10} {'IC 95%':>10}  {'Significatif?':>14}")
+print("-" * 75)
+for j in range(K_h_sim):
+    col = HURDLE_VARS[j] if j < len(HURDLE_VARS) else f"beta_h[{j+1}]"
+    sig = "✓ OUI" if (beta_h_q05[j] > 0 or beta_h_q95[j] < 0) else "  non"
+    print(f"{col:<25} {beta_h_means[j]:>10.3f} {beta_h_q05[j]:>10.3f} {beta_h_q95[j]:>10.3f}  {sig:>14}")
+
+# VOLUME (flux>0) 
+beta_means = beta_grav.mean(axis=0)
+beta_q05   = np.percentile(beta_grav, 5, axis=0)
+beta_q95   = np.percentile(beta_grav, 95, axis=0)
+K_v_sim = beta_means.shape[0]
+
+print(f"\n[ VOLUME (ZTNB) | Simul {N_pays} pays ]")
+print(f"{'Variable':<25} {'Moyenne':>10} {'IC 5%':>10} {'IC 95%':>10}  {'Significatif?':>14}")
+print("-" * 75)
+for j in range(K_v_sim):
+    col = X_VOL_COLS[j] if j < len(X_VOL_COLS) else f"beta_grav[{j+1}]"
     sig = "✓ OUI" if (beta_q05[j] > 0 or beta_q95[j] < 0) else "  non"
     print(f"{col:<25} {beta_means[j]:>10.3f} {beta_q05[j]:>10.3f} {beta_q95[j]:>10.3f}  {sig:>14}")
 
