@@ -207,7 +207,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import arviz as az
+#import arviz as az
 import pycountry_convert as pc
 from cmdstanpy import CmdStanModel
 from sklearn.metrics import accuracy_score
@@ -287,8 +287,8 @@ print(f"Extraction et simulation sur : {N_pays} pays.")
 # In[13]:
 
 
-# ── RUN B : exclusion des pays structurellement absents du train 1990-2010 ──
-# Décommenter ce bloc pour Run B, commenter pour run full 200 pays.
+# runB: exclusion des pays structurellement absents du train 1990-2010 
+
 # Pays exclus : n'existaient pas comme entités souveraines sur 1990-2010,
 # ou sont des territoires sans données de flux cohérentes.
 # Pays conservés par rapport au run 188 pays : ROU, SRB, COD, PSE.
@@ -298,9 +298,9 @@ PAYS_EXCLURE_RUN_B = {
     'MNE',  # Indépendance juin 2006 — une seule période disponible (2010)
     'TLS',  # Indépendance 2002 — choc discontinu post-indépendance
     'CUW',  # Autonomie octobre 2010 — une seule période, insuffisant
-    'GUM',  # Territoire américain, absent des flux Abel & Cohen
-    'MYT',  # Territoire français, absent des flux Abel & Cohen
-    'VIR',  # Territoire américain, absent des flux Abel & Cohen
+    'GUM',  # Territoire américain
+    'MYT',  # Territoire français
+    'VIR',  # Territoire américain
     'CLI',  # Île Christmas, territoire australien minuscule
 }
 
@@ -366,14 +366,14 @@ ISO3_TO_M49_SUBREGION = {
     #  Afrique 
     'DZA': 15, 'EGY': 15, 'LBY': 15, 'MAR': 15, 'SDN': 15, 'TUN': 15, 'ESH': 15,
     'BEN': 16, 'BFA': 16, 'CPV': 16, 'CIV': 16, 'GMB': 16, 'GHA': 16, 'GIN': 16, 'GNB': 16, 'LBR': 16, 'MLI': 16, 'MRT': 16, 'NER': 16, 'NGA': 16, 'SEN': 16, 'SLE': 16, 'TGO': 16,
-    'BDI': 17, 'COM': 17, 'DJI': 17, 'ERI': 17, 'ETH': 17, 'KEN': 17, 'MDG': 17, 'MWI': 17, 'MUS': 17, 'MOZ': 17, 'RWA': 17, 'SYC': 17, 'SOM': 17, 'SSD': 17, 'TZA': 17, 'UGA': 17, 'ZMB': 17, 'ZWE': 17,
+    'BDI': 17, 'COM': 17, 'DJI': 17, 'ERI': 17, 'ETH': 17, 'KEN': 17, 'MDG': 17, 'MWI': 17, 'MUS': 17, 'MOZ': 17, 'REU': 17, 'RWA': 17, 'SYC': 17, 'SOM': 17, 'SSD': 17, 'TZA': 17, 'UGA': 17, 'ZMB': 17, 'ZWE': 17,
     'AGO': 18, 'CMR': 18, 'CAF': 18, 'TCD': 18, 'COD': 18, 'COG': 18, 'GNQ': 18, 'GAB': 18, 'STP': 18,
     'BWA': 19, 'LSO': 19, 'NAM': 19, 'ZAF': 19, 'SWZ': 19,
     #  Amériques 
     'CAN': 21, 'MEX': 21, 'USA': 21,
     'BLZ': 22, 'CRI': 22, 'SLV': 22, 'GTM': 22, 'HND': 22, 'NIC': 22, 'PAN': 22,
-    'ATG': 23, 'BHS': 23, 'BRB': 23, 'CUB': 23, 'DMA': 23, 'DOM': 23, 'GRD': 23, 'HTI': 23, 'JAM': 23, 'KNA': 23, 'LCA': 23, 'VCT': 23, 'TTO': 23, 'ABW': 23, 'PRI': 23,
-    'ARG': 24, 'BOL': 24, 'BRA': 24, 'CHL': 24, 'COL': 24, 'ECU': 24, 'GUY': 24, 'PRY': 24, 'PER': 24, 'SUR': 24, 'URY': 24, 'VEN': 24,
+    'ATG': 23, 'BHS': 23, 'BRB': 23, 'CUB': 23, 'DMA': 23, 'DOM': 23, 'GLP': 23, 'GRD': 23, 'HTI': 23, 'JAM': 23, 'KNA': 23, 'LCA': 23, 'MTQ': 23, 'VCT': 23, 'TTO': 23, 'ABW': 23, 'PRI': 23,
+    'ARG': 24, 'BOL': 24, 'BRA': 24, 'CHL': 24, 'COL': 24, 'ECU': 24, 'GUF': 24, 'GUY': 24, 'PRY': 24, 'PER': 24, 'SUR': 24, 'URY': 24, 'VEN': 24,
     #  Asie 
     'CHN': 30, 'HKG': 30, 'JPN': 30, 'KOR': 30, 'MAC': 30, 'MNG': 30, 'PRK': 30,
     'AFG': 34, 'BGD': 34, 'BTN': 34, 'IND': 34, 'IRN': 34, 'MDV': 34, 'NPL': 34, 'PAK': 34, 'LKA': 34,
@@ -503,7 +503,7 @@ N_h, N_v = len(df_hurdle), len(df_volume)
 print(f"Hurdle : {N_h:,} obs | Volume : {N_v:,} obs")
 
 
-# In[ ]:
+# In[18]:
 
 
 # Nettoyage exclusif de la covariable inertielle brute (sans centrage). Penalité AR1 dans metriques OOS prediction, le modèle ne voit jamais de couloirs fermés en t-1 en train
@@ -835,7 +835,9 @@ else:
 
 N_CHAINS = 4
 PARALLEL_CHAINS = 4
-ITER_SAMPLING = 800
+ITER_WARMUP = 1000
+MAX_TREEDEPTH = 12 
+ITER_SAMPLING = 1300
 THIN = 2
 
 N_DRAWS = ITER_SAMPLING // THIN
@@ -878,14 +880,14 @@ fit = model.sample(
     data             = stan_data,
     chains           = N_CHAINS,
     parallel_chains  = PARALLEL_CHAINS,       
-    iter_warmup      = 750,
+    iter_warmup      = ITER_WARMUP,
     iter_sampling    = ITER_SAMPLING,
     save_warmup      = False,
     seed             = 42,
     inits            = 0.1,
     thin             = THIN,       
     adapt_delta      = 0.95,
-    max_treedepth    = 10,
+    max_treedepth    = MAX_TREEDEPTH,
     show_progress    = True,
     sig_figs = 4,
     output_dir       = "./stan_outputs_tmux"
@@ -932,12 +934,12 @@ print(f"Outputs sécurisés sous : {custom_prefix}_chain*.csv")
 
 # si perte de connexion à la cellule précédente: 
 # Ctrl + K + C/U pour commenter/décommenter
-csv_files=csv_files = [
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain1.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain2.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain3.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_800it_chain4.csv"
- ]
+csv_files = [
+    "/Users/romain/Desktop/tmux temporaire/HMC_ARX_NegBinomial-20260419094551_1.csv",
+    "/Users/romain/Desktop/tmux temporaire/HMC_ARX_NegBinomial-20260419094551_2.csv",
+    "/Users/romain/Desktop/tmux temporaire/HMC_ARX_NegBinomial-20260419094551_3.csv",
+    "/Users/romain/Desktop/tmux temporaire/HMC_ARX_NegBinomial-20260419094551_4.csv"
+]
 print(f"Fichiers ciblés : {len(csv_files)}")
 
 # Lecture de l'en-tête
@@ -949,11 +951,51 @@ with open(csv_files[0], 'r') as f:
 
 
 vars_to_keep_main = [
+    # Prédictions OOS
     'prob_mig_test', 'mu_dt_test', 'phi_test',
-    'beta_grav', 'phi_disp_cluster', 'alpha_global',
-    'tau_alpha', 'beta_h', 'beta_lag_m49', 'mu_em', 'mu_at', 
-    'rho_global_monitor', 'phi_disp_global', 'divergent__'
+
+    # Coefficients structurels
+    'beta_grav', 'beta_h', 'beta_lag_m49',
+
+    # Dispersion
+    'phi_disp_global', 'phi_disp_cluster',
+
+    # AR(1) :diagnostic overfitting dyadique
+    'rho_global_monitor',
+    'tau_rho',          # si proche 0 : pas de variation dyadique réelle
+
+    # Shrinkage Volume
+    'tau_em',           # si proche 0 : effets pays emission non identifiés
+    'tau_at',           # idem attraction
+    'intercept_em',
+    'intercept_at',
+
+    # Shrinkage Hurdle
+    'tau_h_em',
+    'tau_h_at',
+    'intercept_h_em',
+    'intercept_h_at',
+
+    # Hyper-régression Z (population, PIB)
+    'theta_em',         # poids de Z sur alpha_em
+    'theta_at',
+    'theta_h_em',
+    'theta_h_at',
+
+    # Dispersion dyadique
+    'tau_phi_disp',     # si proche 0 : phi homogène entre dyades
+
+    # Beta_lag hiérarchique
+    'mu_beta_lag',
+    'sigma_beta_lag',   # si proche 0 : pas de variation continentale de l'hystérésis
+
+    # Diagnostics HMC
+    'divergent__',
+    'treedepth__',      # si souvent == max_treedepth : géométrie difficile
+    'energy__',         # pour détecter les funnels
+    'stepsize__',
 ]
+
 vars_to_keep_loo = ['log_lik_h', 'log_lik_v']
 
 cols_main = [c for c in all_cols if any(c.startswith(v) for v in vars_to_keep_main)]
@@ -1045,6 +1087,183 @@ print(f"Shape de mu_test : {mu_test.shape}")
 #print(az.summary(idata, var_names=params_watch))
 
 
+# Paramètres scalaires à monitorer (un seul tirage par draw) 
+SCALAIRES = [
+    'rho_global_monitor', 'tau_rho', 'tau_em', 'tau_at',
+    'tau_h_em', 'tau_h_at', 'intercept_em', 'intercept_at',
+    'intercept_h_em', 'intercept_h_at',
+    'phi_disp_global', 'tau_phi_disp',
+    'mu_beta_lag', 'sigma_beta_lag',
+]
+
+# Paramètres vectoriels (plusieurs composantes) 
+VECTORIELS = {
+    'beta_grav'      : X_VOL_COLS,       # labels depuis le notebook principal
+    'beta_h'         : HURDLE_VARS,
+    'beta_lag_m49'   : [f'cluster_{k}' for k in range(1, K_clusters + 1)],
+    'theta_em'       : [f'Z_{k}' for k in range(1, K_Z + 1)],
+    'theta_at'       : [f'Z_{k}' for k in range(1, K_Z + 1)],
+    'theta_h_em'     : [f'Z_{k}' for k in range(1, K_Z + 1)],
+    'theta_h_at'     : [f'Z_{k}' for k in range(1, K_Z + 1)],
+    'phi_disp_cluster': [f'cluster_{k}' for k in range(1, K_clusters + 1)],
+}
+
+
+def ess_bulk(draws):
+    """ESS bulk approximation — Vehtari et al. 2021."""
+    n = len(draws)
+    if n < 4:
+        return np.nan
+    # Rank-normalize
+    from scipy.stats import rankdata
+    r = rankdata(draws) / (n + 1)
+    z = np.where(r < 0.5,
+                 -np.sqrt(2) * np.log(1 / (2 * r)),
+                  np.sqrt(2) * np.log(1 / (2 * (1 - r))))
+    # Autocorrélation lag-1
+    mu = z.mean()
+    var = z.var()
+    if var < 1e-10:
+        return n
+    ac1 = np.corrcoef(z[:-1], z[1:])[0, 1]
+    rho = max(ac1, 0)
+    ess = n * (1 - rho) / (1 + rho)
+    return round(ess)
+
+
+def rhat(chains_draws):
+    """R-hat simple (between/within variance) sur liste de tableaux par chaîne."""
+    m = len(chains_draws)
+    n = min(len(c) for c in chains_draws)
+    chains = np.array([c[:n] for c in chains_draws])  # (m, n)
+    chain_means = chains.mean(axis=1)
+    grand_mean  = chain_means.mean()
+    B = n * np.var(chain_means, ddof=1)
+    W = np.mean([np.var(chains[i], ddof=1) for i in range(m)])
+    var_hat = (n - 1) / n * W + B / n
+    return round(np.sqrt(var_hat / W), 4) if W > 0 else np.nan
+
+
+def summarize_param(name, draws_all, chains_draws):
+    """Retourne un dict de stats pour un paramètre scalaire."""
+    q = np.percentile(draws_all, [5, 25, 50, 75, 95])
+    signif = '✓' if (q[0] > 0 or q[4] < 0) else '–'
+    return {
+        'Paramètre'  : name,
+        'Médiane'    : round(q[2], 4),
+        'IC 5%'      : round(q[0], 4),
+        'IC 95%'     : round(q[4], 4),
+        'Min'        : round(draws_all.min(), 4),
+        'Max'        : round(draws_all.max(), 4),
+        'ESS bulk'   : ess_bulk(draws_all),
+        'R-hat'      : rhat(chains_draws),
+        'Significatif': signif,
+    }
+
+
+# Lecture des draws depuis df_final 
+# df_final = pd.concat des 4 chaînes, déjà chargé dans le notebook
+# N_CHAINS et N_DRAWS définis dans le notebook principal
+
+rows = []
+
+# Scalaires
+for param in SCALAIRES:
+    cols = [c for c in df_final.columns
+            if c == param or c.startswith(f'{param}.') or c.startswith(f'{param}[')]
+    if not cols:
+        continue
+    for col in cols:
+        draws_all = df_final[col].dropna().values.astype(float)
+        chains_draws = [
+            df_final[col].iloc[i * N_DRAWS:(i + 1) * N_DRAWS].dropna().values.astype(float)
+            for i in range(N_CHAINS)
+        ]
+        label = col if len(cols) > 1 else param
+        rows.append(summarize_param(label, draws_all, chains_draws))
+
+# Vectoriels
+for param, labels in VECTORIELS.items():
+    cols = sorted([c for c in df_final.columns
+                   if c.startswith(f'{param}.') or c.startswith(f'{param}[')])
+    for j, col in enumerate(cols):
+        draws_all = df_final[col].dropna().values.astype(float)
+        chains_draws = [
+            df_final[col].iloc[i * N_DRAWS:(i + 1) * N_DRAWS].dropna().values.astype(float)
+            for i in range(N_CHAINS)
+        ]
+        label_suffix = labels[j] if j < len(labels) else f'[{j+1}]'
+        rows.append(summarize_param(f'{param}[{label_suffix}]', draws_all, chains_draws))
+
+summary_df = pd.DataFrame(rows)
+
+# Affichage
+print("═" * 90)
+print("TABLEAU DE DIAGNOSTIC BAYÉSIEN — PARAMÈTRES CLÉS")
+print("═" * 90)
+
+# Seuils de sanité
+BAD_RHAT  = summary_df['R-hat'] > 1.01
+LOW_ESS   = summary_df['ESS bulk'] < 400
+flag_any  = BAD_RHAT | LOW_ESS
+
+print(f"\n{'Paramètre':<35} {'Médiane':>9} {'IC 5%':>9} {'IC 95%':>9} "
+      f"{'ESS':>6} {'R-hat':>7} {'Sig':>4}")
+print("─" * 85)
+
+for _, r in summary_df.iterrows():
+    flag = ' ⚠' if (r['R-hat'] > 1.01 or r['ESS bulk'] < 400) else ''
+    print(f"{r['Paramètre']:<35} {r['Médiane']:>9.4f} {r['IC 5%']:>9.4f} "
+          f"{r['IC 95%']:>9.4f} {int(r['ESS bulk']) if not np.isnan(r['ESS bulk']) else 'NaN':>6} "
+          f"{r['R-hat']:>7.4f} {r['Significatif']:>4}{flag}")
+
+# Résumé des alertes
+print("\n" + "═" * 90)
+print("ALERTES")
+print("═" * 90)
+
+n_div = int(df_final.get('divergent__', pd.Series([0])).sum())
+print(f"Divergences totales         : {n_div}"
+      + (" ⚠ (idéalement = 0)" if n_div > 0 else " ✓"))
+
+if 'treedepth__' in df_final.columns:
+    pct_max_tree = (df_final['treedepth__'] >= 10).mean() * 100
+    print(f"Treedepth saturé (>=10)     : {pct_max_tree:.1f}%"
+          + (" ⚠" if pct_max_tree > 5 else " ✓"))
+
+bad_params = summary_df[flag_any][['Paramètre', 'R-hat', 'ESS bulk']]
+if len(bad_params) > 0:
+    print(f"\nParamètres problématiques (R-hat>1.01 ou ESS<400) :")
+    print(bad_params.to_string(index=False))
+else:
+    print("Tous les paramètres monitorés sont dans les seuils ✓")
+
+# Interprétation automatique des tau 
+print("\n" + "═" * 90)
+print("INTERPRÉTATION DES ÉCHELLES DE SHRINKAGE")
+print("═" * 90)
+
+TAU_INTERP = {
+    'tau_rho'      : "Variation dyadique de rho (AR1)",
+    'tau_em'       : "Variation pays des effets émission (volume)",
+    'tau_at'       : "Variation pays des effets attraction (volume)",
+    'tau_h_em'     : "Variation pays des effets émission (hurdle)",
+    'tau_h_at'     : "Variation pays des effets attraction (hurdle)",
+    'tau_phi_disp' : "Variation dyadique de phi (dispersion ZTNB)",
+    'sigma_beta_lag': "Variation continentale de l'hystérésis (beta_lag)",
+}
+
+for tau, desc in TAU_INTERP.items():
+    row = summary_df[summary_df['Paramètre'] == tau]
+    if row.empty:
+        continue
+    med = row['Médiane'].values[0]
+    ic5 = row['IC 5%'].values[0]
+    verdict = "identifié ✓" if ic5 > 0.05 else "faible — shrinkage fort ⚠"
+    print(f"  {tau:<20} {desc}")
+    print(f"    médiane={med:.4f}, IC5%={ic5:.4f} → {verdict}")
+
+
 # # Prédictions en Numpy (plus rapide) 
 # 
 # Avec médiane (minimiseur norme L1)
@@ -1107,7 +1326,7 @@ y_true_bin = (y_true > 0).astype(int)
 
 # Pondération de la fonction de perte (Asymétrie MAPE)
 # W_FP > 1 force l'algorithme à exiger une probabilité beaucoup plus élevée avant d'ouvrir un couloir.
-W_FP = 5.0
+W_FP = 10.0
 
 
 
@@ -1192,7 +1411,7 @@ log_mae  = np.mean(np.abs(np.log1p(y_true) - np.log1p(y_pred)))
 coverage = np.mean((y_true >= y_pred_q05) & (y_true <= y_pred_q95))
 
 
-print(f"PERFORMANCES du modèle ({N_pays} countries) :")
+print(f"PERFORMANCES du modèle ({N_pays}-{len(exclus_test)} countries) :")
 print(f"Hurdle Accuracy (open/close) : {acc*100:.1f}%")
 print(f"IC 95% Coverage              : {coverage*100:.1f}%")
 print(f"Conditional MAE (flow > 0)   : {cond_mae:,.0f} migrants")
@@ -1204,7 +1423,7 @@ print("-" * 75)
 print(f"{'Welch & Raftery 2022 (Bayésien Global)':<40} | {'~ 1,200':<15} | {'~ 76.0 %':<15}")
 print(f"{'Random Forest (Notre base, ML)':<40} | {'~ 1,792':<15} | {'640 % sans le +1':<15}")
 print("-" * 75)
-print(f"{f'Notre Modèle (ARX Hurdle Bayésien ({N_pays} countries) )':<40} | {global_mae:<15,.0f} | {f'{mape_wr:.1f} %':<15}")
+print(f"{f'Notre Modèle (ARX Hurdle Bayésien ({N_pays}-{len(exclus_test)} countries) )':<40} | {global_mae:<15,.0f} | {f'{mape_wr:.1f} %':<15}")
 print("-" * 75)
 
 
