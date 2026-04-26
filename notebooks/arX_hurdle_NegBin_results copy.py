@@ -175,7 +175,7 @@
 # Coût CPU: negligeable. Coût RAM/Disque colossal.
 # Mettre la generation de log_lik de Stan avec interrupteur ==1 à mettre à 0 pour la production de figures et prédictions, et 1 pour la comparaison de modèles (lourds à simuler)
 
-# In[48]:
+# In[1]:
 
 
 # Installation des bibliothèques non classiqus
@@ -199,7 +199,7 @@ cmdstanpy.install_cmdstan()
 # 
 # 
 
-# In[49]:
+# In[2]:
 
 
 import warnings
@@ -223,7 +223,7 @@ warnings.filterwarnings('ignore')
 np.random.seed(42)
 
 
-# In[50]:
+# In[3]:
 
 
 # Chargement & filtrage pays
@@ -231,7 +231,7 @@ np.random.seed(42)
 
 
 
-DATA_PATH = "../data/df_main_arX_hurdle_final.csv"
+DATA_PATH = "../data/df_main_arX_hurdle_final_v2.csv"
 
 df_main = pd.read_csv(DATA_PATH)
 
@@ -288,7 +288,7 @@ print(f"Extraction et simulation sur : {N_pays} pays.")
 
 
 
-# In[51]:
+# In[4]:
 
 
 # runB: exclusion des pays structurellement absents du train 1990-2010 
@@ -330,7 +330,7 @@ for pays in ['PSE', 'COD', 'ROU', 'SRB']:
     print(f"  {pays} — GDP lag non-NaN sur : {annees}")
 
 
-# In[52]:
+# In[5]:
 
 
 # Clustering géographique (EXOGENE au modèle et PUBLI: ISO-3166 alpha-3. Inattaquable)
@@ -356,7 +356,7 @@ K_clusters = 6
 
 
 
-# In[53]:
+# In[6]:
 
 
 # Clustering géographique: Sous-régions ONU (norme M49)
@@ -433,7 +433,7 @@ if not problematic.empty:
 # Régularisation rigide vers le prior si volume de dyades modérés, overfitting si trop peu de dyades. 
 # La hiérarchie permet d'apprendre à partir de TOUTES les dyades. 
 
-# In[54]:
+# In[7]:
 
 
 # Features, lags et split train/test
@@ -513,7 +513,7 @@ df       = df_train
 
 
 
-# In[55]:
+# In[8]:
 
 
 # Séparation hurdle / volume
@@ -529,7 +529,7 @@ N_h, N_v = len(df_hurdle), len(df_volume)
 print(f"Hurdle : {N_h:,} obs | Volume : {N_v:,} obs")
 
 
-# In[56]:
+# In[9]:
 
 
 # variable de Transitivité 
@@ -590,16 +590,24 @@ RF_VARS = HURDLE_VARS + [
     'type_of_conflict_o_lag1', #colinéarité (0.94) avec intensity_o dans Hurdle
     'type_of_conflict_d_lag1', #colinéarité (0.94) avec intensity_d dans Hurdle
     'transitivity_proxy',           # connectivité réseau
-    'instability_o', 'instability_d',  # index composite (remplace polyarchy+clphy)
-    'intensity_level_o_lag_persist',   # persistance conflit origine
-    'intensity_level_d_lag_persist',   # persistance conflit destination
-    'type_of_conflict_o_lag_persist',  # persistance type conflit origine
-    'type_of_conflict_d_lag_persist', # persistance type conflit destination
+    #'instability_o', 'instability_d',  # index composite (remplace polyarchy+clphy)
+
+    # 'intensity_level_o_lag_persist',   # persistance conflit origine
+    # 'intensity_level_d_lag_persist',   # persistance conflit destination
+    # 'type_of_conflict_o_lag_persist',  # persistance type conflit origine
+    # 'type_of_conflict_d_lag_persist', # persistance type conflit destination
+
     'v2x_polyarchy_o_lag5', 'v2x_clphy_o_lag5',
     'intensity_level_o_lag5', 'type_of_conflict_o_lag5',
     'v2x_polyarchy_d_lag5', 'v2x_clphy_d_lag5',
     'intensity_level_d_lag5', 'type_of_conflict_d_lag5',
-    'log_stock_lag' # Effet de transitivité / Diaspora
+    'log_stock_lag', # Effet de transitivité / Diaspora
+    'any_conflict_o_window',
+       'max_conflict_o_window', 'any_intense_o_window', 'any_intl_o_window',
+       'any_conflict_d_window', 'max_conflict_d_window',
+       'any_intense_d_window', 'any_intl_d_window', 'new_conflict_o',
+       'new_conflict_d', 'persistent_conflict_o', 'persistent_conflict_d'
+
 ]
 
 # Créer le différentiel GDP avant le RF
@@ -611,6 +619,7 @@ df_test['log_gdpcap_diff'] = (
 )
 
 RF_VARS = RF_VARS + ['log_gdpcap_diff']
+
 
 # Filtrage des colonnes réellement présentes
 RF_VARS_PRESENT = [c for c in RF_VARS if c in df_hurdle.columns]
@@ -670,7 +679,7 @@ print(importances.head(20).round(4))
 
 
 
-# In[ ]:
+# In[10]:
 
 
 # from sklearn.model_selection import cross_val_score
@@ -681,7 +690,7 @@ print(importances.head(20).round(4))
 # print(f"RF AUC cross-validé (5-fold) : {auc_cv:.4f}")
 
 
-# In[ ]:
+# In[11]:
 
 
 # # Comparer AUC train vs CV pour détecter l'overfitting
@@ -705,7 +714,7 @@ print(importances.head(20).round(4))
 # # Écart acceptable si < 0.02
 
 
-# In[ ]:
+# In[12]:
 
 
 # from sklearn.model_selection import GridSearchCV
@@ -725,7 +734,7 @@ print(importances.head(20).round(4))
 # rf_model = grid_search.best_estimator_
 
 
-# In[60]:
+# In[13]:
 
 
 # Nettoyage exclusif de la covariable inertielle brute (sans centrage). Penalité AR1 dans metriques OOS prediction, le modèle ne voit jamais de couloirs fermés en t-1 en train
@@ -736,7 +745,7 @@ df_test['log_flow_lag_clean'] = (
 )
 
 
-# In[61]:
+# In[14]:
 
 
 # Encodage dyades et standardisation
@@ -782,7 +791,7 @@ X_h_std,   stats_h   = standardize_matrix(df_hurdle[HURDLE_VARS].values, HURDLE_
 
 
 
-# In[62]:
+# In[15]:
 
 
 # Préparation du jeu de test OOS
@@ -818,7 +827,7 @@ X_test_h_std, _ = standardize_matrix(df_test[HURDLE_VARS].values, HURDLE_VARS,
                                      BINARY_COLS_HUR, fit_stats=stats_h)
 
 
-# In[63]:
+# In[16]:
 
 
 # Nettoyage impératif des infinis (flux nuls passés en log)
@@ -829,7 +838,7 @@ df_volume = df_volume.replace([np.inf, -np.inf], np.nan).dropna(subset=VOLUME_RE
 print(f"Infinis dans Volume : {np.isinf(df_volume[X_VOL_COLS].values).sum()}")
 
 
-# In[64]:
+# In[17]:
 
 
 # réseau initial (avant perte temporelle ou vectorielle)
@@ -870,7 +879,7 @@ else:
     print("Aucun NaN détecté dans les colonnes ici.")
 
 
-# In[65]:
+# In[18]:
 
 
 tous_les_pays = sorted(list(set(df['orig'].unique()).union(set(df['dest'].unique()))))
@@ -886,7 +895,7 @@ df_hurdle['orig_id_h'] = df_hurdle['orig'].map(pays_to_id)
 df_hurdle['dest_id_h'] = df_hurdle['dest'].map(pays_to_id)
 
 
-# In[66]:
+# In[19]:
 
 
 # paramètres structurels macroéconomiques par pays 
@@ -945,7 +954,7 @@ Z_at = Z_mat
 # 
 # 
 
-# In[67]:
+# In[20]:
 
 
 stan_data = {
@@ -995,7 +1004,7 @@ stan_data = {
 }
 
 
-# In[68]:
+# In[21]:
 
 
 # cellule d'audit vibe-codé, pas très grave car fonctionnelle, vérifiée. 
@@ -1048,22 +1057,22 @@ else:
     raise ValueError("INTERRUPTION : Corruption détectée dans stan_data. Le HMC crashera.")
 
 
-# In[ ]:
+# In[22]:
 
 
 # Sampling Stan parameters
 
 N_CHAINS = 4
 PARALLEL_CHAINS = 4
-ITER_WARMUP = 900
+ITER_WARMUP = 1000
 MAX_TREEDEPTH = 12 
-ITER_SAMPLING = 1200
+ITER_SAMPLING = 1300
 THIN = 2
 
 N_DRAWS = ITER_SAMPLING // THIN
 
 
-# In[70]:
+# In[23]:
 
 
 # Sampling Stan
@@ -1155,10 +1164,10 @@ print(f"Outputs sécurisés sous : {custom_prefix}_chain*.csv")
 # si perte de connexion à la cellule précédente: 
 # Ctrl + K + C/U pour commenter/décommenter
 csv_files = [
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_1100it_chain1.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_1100it_chain2.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_1100it_chain3.csv",
-    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_1100it_chain4.csv"
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_1200it_chain1.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_1200it_chain2.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_1200it_chain3.csv",
+    "/home/onyxia/work/ProjetStat/notebooks/stan_outputs_tmux/ARX_200pays_4c_1200it_chain4.csv"
 ]
 print(f"Fichiers ciblés : {len(csv_files)}")
 
@@ -1487,10 +1496,10 @@ for tau, desc in TAU_INTERP.items():
 # In[ ]:
 
 
-conflict_cols = ['v2x_clphy_o_lag', 'intensity_level_o_lag',
-                 'v2x_clphy_d_lag', 'intensity_level_d_lag',
-                 'v2x_polyarchy_o_lag', 'v2x_polyarchy_d_lag',
-                 'type_of_conflict_o_lag', 'type_of_conflict_d_lag']
+conflict_cols = ['v2x_clphy_o_lag1', 'intensity_level_o_lag1',
+                 'v2x_clphy_d_lag1', 'intensity_level_d_lag1',
+                 'v2x_polyarchy_o_lag1', 'v2x_polyarchy_d_lag1',
+                 'type_of_conflict_o_lag1', 'type_of_conflict_d_lag1']
 
 corr_matrix = df_hurdle[conflict_cols].corr().round(2)
 print(corr_matrix)
@@ -1558,21 +1567,79 @@ y_true_bin = (y_true > 0).astype(int)
 
 # Pondération de la fonction de perte (Asymétrie MAPE)
 # W_FP > 1 force l'algorithme à exiger une probabilité beaucoup plus élevée avant d'ouvrir un couloir.
-W_FP = 10.0
+
+# NON REGIONALISE M49 
+# W_FP = 20.0
 
 
 
-fpr, tpr, thresholds = roc_curve(y_true_bin, prob_med)
+# fpr, tpr, thresholds = roc_curve(y_true_bin, prob_med)
 
-# Maximisation du gain sous pénalité asymétrique
-asymmetric_score = tpr - (W_FP * fpr)
-optimal_idx = np.argmax(asymmetric_score)
-optimal_threshold = thresholds[optimal_idx]
+# # Maximisation du gain sous pénalité asymétrique
+# asymmetric_score = tpr - (W_FP * fpr)
+# optimal_idx = np.argmax(asymmetric_score)
+# optimal_threshold = thresholds[optimal_idx]
 
-print(f"Seuil ROC optimal trouvé pour ({N_pays} pays) : {optimal_threshold:.3f}")
+# print(f"Seuil ROC optimal trouvé pour ({N_pays} pays) : {optimal_threshold:.3f}")
 
-# Décision dure : application du processus Hurdle
-y_pred = np.where(prob_med > optimal_threshold, flow_cond_med_final, 0.0)
+# # Décision dure : application du processus Hurdle
+# y_pred = np.where(prob_med > optimal_threshold, flow_cond_med_final, 0.0)
+
+# REGIONALISE M49
+W_FP_global = 25.0  # ancre globale
+
+seuil_par_cluster = {}
+wp_par_cluster    = {}
+
+for cluster_id in np.unique(cluster_test):
+    mask_c = (cluster_test == cluster_id)
+    n_pos  = y_true_bin[mask_c].sum()
+    n_neg  = (1 - y_true_bin[mask_c]).sum()
+
+    if n_pos < 30 or n_neg < 30:
+        # Cluster trop petit : seuil global
+        fpr_g, tpr_g, thresh_g = roc_curve(y_true_bin, prob_med)
+        score_g = tpr_g - (W_FP_global * fpr_g)
+        seuil_par_cluster[cluster_id] = thresh_g[np.argmax(score_g)]
+        wp_par_cluster[cluster_id]    = W_FP_global
+        continue
+
+    # WP proportionnel au ratio négatifs/positifs
+    # Logique : beaucoup de négatifs → beaucoup à protéger → WP élevé
+    #           peu de négatifs → peu à protéger → WP bas
+    ratio = n_neg / n_pos
+    ratio_global = (1 - y_true_bin).sum() / y_true_bin.sum()
+
+    # Normalisation : WP_cluster = WP_global * (ratio_cluster / ratio_global)
+    # Si ratio_cluster == ratio_global → WP_cluster == WP_global
+    # Si ratio_cluster >> ratio_global → WP_cluster >> WP_global (protéger les négatifs)
+    # Si ratio_cluster << ratio_global → WP_cluster << WP_global (permissif)
+    wp_c = W_FP_global * (ratio / ratio_global)
+
+    # Bornes : éviter des WP extrêmes
+    wp_c = np.clip(wp_c, 2.0, 50.0)
+    wp_par_cluster[cluster_id] = wp_c
+
+    fpr_c, tpr_c, thresh_c = roc_curve(y_true_bin[mask_c], prob_med[mask_c])
+    score_c = tpr_c - (wp_c * fpr_c)
+    seuil_par_cluster[cluster_id] = thresh_c[np.argmax(score_c)]
+
+    label = SUBREGION_LABELS.get(stan_to_m49.get(cluster_id, 99), f'cluster_{cluster_id}')
+    print(f"  {label:<30} seuil={seuil_par_cluster[cluster_id]:.3f}  "
+          f"WP={wp_c:.1f}  ratio={ratio:.2f}  "
+          f"(n_pos={n_pos}, n_neg={n_neg})")
+
+# Application
+y_pred_bin_cluster = np.zeros(len(y_true_bin), dtype=int)
+for cluster_id, seuil_c in seuil_par_cluster.items():
+    mask_c = (cluster_test == cluster_id)
+    y_pred_bin_cluster[mask_c] = (prob_med[mask_c] > seuil_c).astype(int)
+
+y_pred    = np.where(y_pred_bin_cluster == 1, flow_cond_med_final, 0.0)
+y_pred_bin = y_pred_bin_cluster
+
+print(f"\nSeuil ROC global de référence : {optimal_threshold:.3f}")
+print(f"Seuil ROC par cluster WP-adaptatif : appliqué ✓")
 
 # Intervalles de confiance
 is_mig_sim = np.random.binomial(1, np.clip(prob_clean, 0, 1))
@@ -1621,7 +1688,13 @@ print(f"  Max prédit      ({N_pays} pays) : {y_pred.max():,.0f} migrants")
 # Métriques OOS
 
 # Évaluation du Hurdle avec le seuil donné par ROC. On vise >96.5% d'accuracy 
-y_pred_bin = (prob_med > optimal_threshold).astype(int)
+
+
+#NON REGIONALISE
+# y_pred_bin = (prob_med > optimal_threshold).astype(int)
+
+#REGIONALISE
+y_pred_bin = y_pred_bin_cluster
 acc = accuracy_score(y_true_bin, y_pred_bin)
 
 # Erreurs Absolues (norme L1) 
